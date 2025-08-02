@@ -4,6 +4,8 @@ import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { Users } from '../../pages/admin/Users';
 import { Logs } from '../../pages/admin/Logs';
+import { Analytics } from '../../pages/admin/Analytics';
+import { Tasks } from '../../pages/admin/Tasks';
 
 // Placeholder admin pages (will be created next)
 const AdminDashboard = () => (
@@ -13,20 +15,8 @@ const AdminDashboard = () => (
   </div>
 );
 
-const AdminTasks = () => (
-  <div id="admin-tasks-placeholder" className="p-6">
-    <h1 className="text-2xl font-bold text-gray-900">Task Management</h1>
-    <p className="text-gray-600">Create and manage tasks</p>
-  </div>
-);
 
 
-const AdminAnalytics = () => (
-  <div id="admin-analytics-placeholder" className="p-6">
-    <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
-    <p className="text-gray-600">View usage analytics and reports</p>
-  </div>
-);
 
 export const AdminLayout: React.FC = () => {
   const adminNavItems = [
@@ -48,9 +38,9 @@ export const AdminLayout: React.FC = () => {
           <Routes>
             <Route path="/" element={<AdminDashboard />} />
             <Route path="/users" element={<Users />} />
-            <Route path="/tasks" element={<AdminTasks />} />
+            <Route path="/tasks" element={<Tasks />} />
             <Route path="/logs" element={<Logs />} />
-            <Route path="/analytics" element={<AdminAnalytics />} />
+            <Route path="/analytics" element={<Analytics />} />
             <Route path="*" element={<Navigate to="/admin" replace />} />
           </Routes>
         </main>
