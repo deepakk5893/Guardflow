@@ -93,14 +93,39 @@ async def unblock_user(
 async def get_tasks(
     skip: int = 0,
     limit: int = 100,
+    category: Optional[str] = None,
+    difficulty_level: Optional[str] = None,
+    is_active: Optional[bool] = None,
+    search: Optional[str] = None,
     db: Session = Depends(get_db),
     current_admin: User = Depends(get_current_admin_user)
 ):
-    """Get all tasks with assignment status (admin only)"""
+    """Get all tasks with assignment status and filtering (admin only)"""
     from app.models.user_task import UserTask
-    from sqlalchemy import func
+    from sqlalchemy import func, or_
     
-    tasks = db.query(Task).offset(skip).limit(limit).all()
+    # Start with base query
+    query = db.query(Task)
+    
+    # Apply filters
+    if category:
+        query = query.filter(Task.category == category)
+    
+    if difficulty_level:
+        query = query.filter(Task.difficulty_level == difficulty_level)
+    
+    if is_active is not None:
+        query = query.filter(Task.is_active == is_active)
+    
+    if search:
+        query = query.filter(
+            or_(
+                Task.title.ilike(f"%{search}%"),
+                Task.description.ilike(f"%{search}%")
+            )
+        )
+    
+    tasks = query.offset(skip).limit(limit).all()
     
     # Get assignment counts for each task
     assignment_counts = db.query(

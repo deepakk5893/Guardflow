@@ -174,19 +174,17 @@ export const Analytics: React.FC = () => {
             </div>
           </div>
 
-          <div id="success-rate-stat" className="bg-white p-6 rounded-lg border border-gray-200">
+          <div id="avg-requests-stat" className="bg-white p-6 rounded-lg border border-gray-200">
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                  <span className="text-green-600 text-lg">✅</span>
+                  <span className="text-green-600 text-lg">📅</span>
                 </div>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Success Rate</p>
+                <p className="text-sm font-medium text-gray-500">Avg Requests/Day</p>
                 <p className="text-2xl font-semibold text-gray-900">
-                  {usageStats.total_requests > 0 
-                    ? ((usageStats.successful_requests / usageStats.total_requests) * 100).toFixed(1)
-                    : 0}%
+                  {usageStats.avg_requests_per_day?.toLocaleString() || 0}
                 </p>
               </div>
             </div>
@@ -201,7 +199,7 @@ export const Analytics: React.FC = () => {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Total Tokens</p>
-                <p className="text-2xl font-semibold text-gray-900">{usageStats.total_tokens_used.toLocaleString()}</p>
+                <p className="text-2xl font-semibold text-gray-900">{usageStats.total_tokens_used?.toLocaleString() || 0}</p>
               </div>
             </div>
           </div>
@@ -215,7 +213,7 @@ export const Analytics: React.FC = () => {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">Active Users</p>
-                <p className="text-2xl font-semibold text-gray-900">{usageStats.unique_users}</p>
+                <p className="text-2xl font-semibold text-gray-900">{usageStats.active_users || 0}</p>
               </div>
             </div>
           </div>

@@ -10,14 +10,18 @@ export const Login: React.FC = () => {
   const location = useLocation();
 
   // Redirect if already authenticated
-  if (isAuthenticated) {
-    // Get the intended destination from state, or default based on user type
-    const fromLocation = location.state?.from;
-    const from = fromLocation 
-      ? `${fromLocation.pathname}${fromLocation.search || ''}` 
-      : (user?.email === import.meta.env.VITE_ADMIN_EMAIL ? '/admin' : '/dashboard');
-    console.log('Redirecting authenticated user to:', from);
-    return <Navigate to={from} replace />;
+  if (isAuthenticated && user) {
+    // Always redirect to the appropriate base route based on user role
+    // Don't use previous location to avoid getting stuck in wrong subdomain
+    const isAdmin = user.email === import.meta.env.VITE_ADMIN_EMAIL;
+    const targetRoute = isAdmin ? '/admin' : '/dashboard';
+    console.log('User login redirect:', {
+      email: user.email,
+      adminEmail: import.meta.env.VITE_ADMIN_EMAIL,
+      isAdmin,
+      targetRoute
+    });
+    return <Navigate to={targetRoute} replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -23,13 +23,23 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   if (!isAuthenticated) {
-    // Save the attempted location so we can redirect back after login
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    // Redirect to login without saving location to avoid subdomain issues
+    return <Navigate to="/login" replace />;
   }
 
   // For admin routes, check if user is admin (using email for now)
-  if (requireAdmin && user?.email !== import.meta.env.VITE_ADMIN_EMAIL) {
-    return <Navigate to="/dashboard" replace />;
+  if (requireAdmin) {
+    const isAdmin = user?.email === import.meta.env.VITE_ADMIN_EMAIL;
+    console.log('Admin route check:', {
+      email: user?.email,
+      adminEmail: import.meta.env.VITE_ADMIN_EMAIL,
+      isAdmin,
+      requireAdmin
+    });
+    
+    if (!isAdmin) {
+      return <Navigate to="/dashboard" replace />;
+    }
   }
 
   return <div id="protected-route-content">{children}</div>;

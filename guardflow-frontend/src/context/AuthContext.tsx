@@ -109,6 +109,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     localStorage.removeItem('auth_token');
     dispatch({ type: 'LOGOUT' });
+    // Clear any navigation state and redirect to login
+    window.location.href = '/login';
   };
 
   return (

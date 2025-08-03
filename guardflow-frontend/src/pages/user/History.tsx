@@ -4,21 +4,26 @@ import { UserDashboardService, type UserLogFilters } from '../../services/userDa
 import '../../styles/userHistory.css';
 
 export const UserHistory: React.FC = () => {
-  const [filters, setFilters] = useState<UserLogFilters>({});
-  const [selectedLog, setSelectedLog] = useState<any>(null);
+  const [filters, setFilters] = useState<any>({});
+  const [selectedTask, setSelectedTask] = useState<any>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
-  // Fetch user logs
-  const { data: logs = [], isLoading, error } = useQuery({
-    queryKey: ['user-logs', filters],
-    queryFn: () => UserDashboardService.getUserLogs(filters, 50, 0),
+  // Fetch user task history
+  const { data: taskHistory = [], isLoading, error } = useQuery({
+    queryKey: ['user-task-history', filters],
+    queryFn: () => UserDashboardService.getUserTasks(),
     refetchInterval: 30000,
   });
 
-  // Fetch user tasks for filter dropdown
-  const { data: userTasks = [] } = useQuery({
-    queryKey: ['user-tasks'],
-    queryFn: UserDashboardService.getUserTasks,
+  // Filter tasks based on filters
+  const filteredTasks = taskHistory.filter(task => {
+    if (filters.status && task.status !== filters.status) return false;
+    if (filters.category && task.task_category !== filters.category) return false;
+    if (filters.start_date && task.assigned_at < filters.start_date) return false;
+    if (filters.end_date && task.assigned_at > filters.end_date) return false;
+    if (filters.search && !task.task_title.toLowerCase().includes(filters.search.toLowerCase()) && 
+        !task.task_description.toLowerCase().includes(filters.search.toLowerCase())) return false;
+    return true;
   });
 
   const handleFilterChange = (newFilters: Partial<UserLogFilters>) => {
@@ -29,21 +34,35 @@ export const UserHistory: React.FC = () => {
     setFilters({});
   };
 
-  const handleViewDetails = (log: any) => {
-    setSelectedLog(log);
+  const handleViewDetails = (task: any) => {
+    setSelectedTask(task);
     setIsDetailsModalOpen(true);
   };
 
-  const handleExportLogs = async () => {
+  const handleExportTasks = async () => {
     try {
-      const csvData = await UserDashboardService.exportUserLogs(filters);
+      // Create CSV content from filtered tasks
+      const headers = ['Task Title', 'Category', 'Difficulty', 'Status', 'Assigned Date', 'Completion Date', 'Tokens Used', 'Token Limit'];
+      const csvContent = [
+        headers.join(','),
+        ...filteredTasks.map(task => [
+          `"${task.task_title}"`,
+          task.task_category,
+          task.task_difficulty,
+          task.status,
+          task.assigned_at,
+          task.completion_date || '',
+          task.tokens_used,
+          task.token_limit
+        ].join(','))
+      ].join('\n');
       
       // Create and download file
-      const blob = new Blob([csvData], { type: 'text/csv' });
+      const blob = new Blob([csvContent], { type: 'text/csv' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `my-requests-${new Date().toISOString().split('T')[0]}.csv`;
+      a.download = `my-tasks-${new Date().toISOString().split('T')[0]}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -66,6 +85,15 @@ export const UserHistory: React.FC = () => {
       case 'success': return 'bg-green-100 text-green-800';
       case 'error': return 'bg-red-100 text-red-800';
       case 'blocked': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getTaskStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'active': return 'bg-blue-100 text-blue-800';
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -104,8 +132,8 @@ export const UserHistory: React.FC = () => {
       <div id="history-header" className="mb-6">
         <div id="history-title-section" className="flex justify-between items-center mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Request History</h1>
-            <p className="text-gray-600">View your API request history and responses</p>
+            <h1 className="text-2xl font-bold text-gray-900">Task History</h1>
+            <p className="text-gray-600">View your assigned tasks and their progress</p>
           </div>
           <div className="flex space-x-3">
             <button
@@ -117,7 +145,7 @@ export const UserHistory: React.FC = () => {
             </button>
             <button
               id="export-history-btn"
-              onClick={handleExportLogs}
+              onClick={handleExportTasks}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
             >
               📥 Export CSV
@@ -128,27 +156,25 @@ export const UserHistory: React.FC = () => {
         {/* Filters */}
         <div id="history-filters" className="bg-white p-4 rounded-lg border border-gray-200 space-y-4">
           <div className="flex flex-wrap gap-4">
-            {/* Task Filter */}
-            {userTasks.length > 0 && (
-              <div id="task-filter" className="flex-1 min-w-48">
-                <label htmlFor="task-select" className="block text-sm font-medium text-gray-700 mb-1">
-                  Task
-                </label>
-                <select
-                  id="task-select"
-                  value={filters.task_id || ''}
-                  onChange={(e) => handleFilterChange({ task_id: e.target.value ? parseInt(e.target.value) : undefined })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">All Tasks</option>
-                  {userTasks.map(task => (
-                    <option key={task.task_id} value={task.task_id}>
-                      {task.task_title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+            {/* Category Filter */}
+            <div id="category-filter" className="flex-1 min-w-48">
+              <label htmlFor="category-select" className="block text-sm font-medium text-gray-700 mb-1">
+                Category
+              </label>
+              <select
+                id="category-select"
+                value={filters.category || ''}
+                onChange={(e) => handleFilterChange({ category: e.target.value || undefined })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Categories</option>
+                <option value="coding">Coding</option>
+                <option value="testing">Testing</option>
+                <option value="documentation">Documentation</option>
+                <option value="research">Research</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
 
             {/* Status Filter */}
             <div id="status-filter" className="flex-1 min-w-32">
@@ -162,9 +188,9 @@ export const UserHistory: React.FC = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">All Statuses</option>
-                <option value="success">Success</option>
-                <option value="error">Error</option>
-                <option value="blocked">Blocked</option>
+                <option value="active">Active</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
               </select>
             </div>
 
@@ -228,39 +254,39 @@ export const UserHistory: React.FC = () => {
 
         {/* Stats */}
         <div id="history-stats" className="flex items-center space-x-6 text-sm text-gray-600 mt-4">
-          <span>Total Requests: {logs.length}</span>
-          <span>Success: {logs.filter(l => l.status === 'success').length}</span>
-          <span>Errors: {logs.filter(l => l.status === 'error').length}</span>
-          <span>Blocked: {logs.filter(l => l.status === 'blocked').length}</span>
+          <span>Total Tasks: {filteredTasks.length}</span>
+          <span>Active: {filteredTasks.filter(t => t.status === 'active').length}</span>
+          <span>Completed: {filteredTasks.filter(t => t.status === 'completed').length}</span>
+          <span>Cancelled: {filteredTasks.filter(t => t.status === 'cancelled').length}</span>
           {isLoading && <span className="text-blue-600">🔄 Loading...</span>}
         </div>
       </div>
 
-      {/* Request History Table */}
+      {/* Task History Table */}
       <div id="history-table-section" className="bg-white rounded-lg shadow-sm border border-gray-200">
-        {logs.length === 0 && !isLoading ? (
+        {filteredTasks.length === 0 && !isLoading ? (
           <div id="no-history-found" className="text-center py-12">
-            <p className="text-gray-500">No request history found.</p>
+            <p className="text-gray-500">No task history found.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Request</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Intent</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tokens</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {logs.map((log) => {
-                  const { date, time } = formatDate(log.timestamp);
+                {filteredTasks.map((task) => {
+                  const { date, time } = formatDate(task.assigned_at);
                   
                   return (
-                    <tr key={log.id} className="hover:bg-gray-50">
+                    <tr key={task.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
                         <div className="text-sm">
                           <div className="font-medium text-gray-900">{date}</div>
@@ -271,61 +297,48 @@ export const UserHistory: React.FC = () => {
                       <td className="px-6 py-4">
                         <div className="text-sm max-w-xs">
                           <div className="font-medium text-gray-900 mb-1">
-                            {log.model}
-                            {log.response_time_ms && (
-                              <span className="text-gray-500 ml-2">({log.response_time_ms}ms)</span>
-                            )}
+                            {task.task_title}
                           </div>
                           <div className="text-gray-600">
-                            {truncateText(log.prompt)}
+                            {truncateText(task.task_description)}
                           </div>
-                          {log.task_title && (
-                            <div className="text-xs text-blue-600 mt-1">
-                              Task: {log.task_title}
-                            </div>
-                          )}
+                          <div className="text-xs text-blue-600 mt-1">
+                            Difficulty: {task.task_difficulty}
+                          </div>
                         </div>
                       </td>
                       
                       <td className="px-6 py-4">
-                        {log.intent_classification ? (
-                          <div>
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getIntentColor(log.intent_classification)}`}>
-                              {log.intent_classification}
-                            </span>
-                            {log.confidence_score && (
-                              <div className="text-xs text-gray-500 mt-1">
-                                {(Number(log.confidence_score) * 100).toFixed(0)}%
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-gray-400 text-sm">N/A</span>
-                        )}
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getIntentColor(task.task_category)}`}>
+                          {task.task_category}
+                        </span>
                       </td>
                       
                       <td className="px-6 py-4">
                         <div className="text-sm">
                           <div className="font-medium text-gray-900">
-                            {log.tokens_used.toLocaleString()}
+                            {task.tokens_used.toLocaleString()} / {task.token_limit.toLocaleString()}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {((task.tokens_used / task.token_limit) * 100).toFixed(1)}% used
                           </div>
                         </div>
                       </td>
                       
                       <td className="px-6 py-4">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(log.status)}`}>
-                          {log.status}
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTaskStatusColor(task.status)}`}>
+                          {task.status}
                         </span>
-                        {log.deviation_score_delta > 0 && (
-                          <div className="text-xs text-orange-600 mt-1">
-                            Score: +{log.deviation_score_delta}
+                        {task.completion_date && (
+                          <div className="text-xs text-green-600 mt-1">
+                            Completed: {formatDate(task.completion_date).date}
                           </div>
                         )}
                       </td>
                       
                       <td className="px-6 py-4">
                         <button
-                          onClick={() => handleViewDetails(log)}
+                          onClick={() => handleViewDetails(task)}
                           className="text-blue-600 hover:text-blue-900 text-sm font-medium"
                         >
                           View Details
@@ -341,19 +354,19 @@ export const UserHistory: React.FC = () => {
       </div>
 
       {/* Simple Details Modal */}
-      {isDetailsModalOpen && selectedLog && (
+      {isDetailsModalOpen && selectedTask && (
         <div id="log-details-modal" className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg w-full max-w-4xl mx-4 max-h-screen overflow-y-auto">
             {/* Header */}
             <div className="flex justify-between items-center p-6 border-b border-gray-200">
               <div>
-                <h2 className="text-xl font-semibold text-gray-900">Request Details</h2>
-                <p className="text-sm text-gray-600">Request ID: {selectedLog.id}</p>
+                <h2 className="text-xl font-semibold text-gray-900">Task Details</h2>
+                <p className="text-sm text-gray-600">Task: {selectedTask.task_title}</p>
               </div>
               <button
                 onClick={() => {
                   setIsDetailsModalOpen(false);
-                  setSelectedLog(null);
+                  setSelectedTask(null);
                 }}
                 className="text-gray-400 hover:text-gray-600"
               >
@@ -365,33 +378,46 @@ export const UserHistory: React.FC = () => {
 
             {/* Content */}
             <div className="p-6 space-y-6">
-              {/* Prompt */}
+              {/* Task Description */}
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Prompt</h3>
-                <div className="bg-gray-50 p-4 rounded-lg max-h-64 overflow-y-auto">
-                  <pre className="text-sm text-gray-700 whitespace-pre-wrap">{selectedLog.prompt}</pre>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Task Description</h3>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-700">{selectedTask.task_description}</p>
                 </div>
               </div>
 
-              {/* Response */}
-              {selectedLog.response && (
+              {/* Progress Notes */}
+              {selectedTask.progress_notes && (
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Response</h3>
-                  <div className="bg-gray-50 p-4 rounded-lg max-h-64 overflow-y-auto">
-                    <pre className="text-sm text-gray-700 whitespace-pre-wrap">{selectedLog.response}</pre>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Progress Notes</h3>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-700">{selectedTask.progress_notes}</p>
                   </div>
                 </div>
               )}
 
-              {/* Error */}
-              {selectedLog.error_message && (
+              {/* Task Details */}
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <h3 className="text-lg font-medium text-red-900 mb-2">Error Message</h3>
-                  <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                    <pre className="text-sm text-red-700 whitespace-pre-wrap">{selectedLog.error_message}</pre>
+                  <h4 className="font-medium text-gray-900 mb-2">Task Information</h4>
+                  <div className="space-y-2 text-sm">
+                    <div><span className="font-medium">Category:</span> {selectedTask.task_category}</div>
+                    <div><span className="font-medium">Difficulty:</span> {selectedTask.task_difficulty}</div>
+                    <div><span className="font-medium">Estimated Hours:</span> {selectedTask.estimated_hours}</div>
                   </div>
                 </div>
-              )}
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">Usage & Progress</h4>
+                  <div className="space-y-2 text-sm">
+                    <div><span className="font-medium">Tokens Used:</span> {selectedTask.tokens_used?.toLocaleString()}</div>
+                    <div><span className="font-medium">Token Limit:</span> {selectedTask.token_limit?.toLocaleString()}</div>
+                    <div><span className="font-medium">Assigned:</span> {formatDate(selectedTask.assigned_at).date}</div>
+                    {selectedTask.completion_date && (
+                      <div><span className="font-medium">Completed:</span> {formatDate(selectedTask.completion_date).date}</div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Footer */}
@@ -399,7 +425,7 @@ export const UserHistory: React.FC = () => {
               <button
                 onClick={() => {
                   setIsDetailsModalOpen(false);
-                  setSelectedLog(null);
+                  setSelectedTask(null);
                 }}
                 className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
               >

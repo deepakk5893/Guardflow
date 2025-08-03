@@ -2,13 +2,13 @@ import { apiService } from './api';
 
 export interface UsageStats {
   total_requests: number;
-  successful_requests: number;
-  failed_requests: number;
-  blocked_requests: number;
+  active_users: number;
   total_tokens_used: number;
-  average_response_time: number;
-  unique_users: number;
-  period: string;
+  avg_requests_per_day: number;
+  avg_tokens_per_request: number;
+  intent_distribution: Record<string, number>;
+  error_rate_percent: number;
+  analysis_period_days: number;
 }
 
 export interface DailyUsage {
@@ -47,72 +47,57 @@ export interface AnalyticsFilters {
 export class AnalyticsService {
   // Get overall usage statistics
   static async getUsageStats(filters: AnalyticsFilters = {}): Promise<UsageStats> {
-    const params = new URLSearchParams();
+    // Calculate days for the backend endpoint
+    let days = 7; // default
+    if (filters.start_date && filters.end_date) {
+      const start = new Date(filters.start_date);
+      const end = new Date(filters.end_date);
+      days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    }
     
-    if (filters.start_date) params.append('start_date', filters.start_date);
-    if (filters.end_date) params.append('end_date', filters.end_date);
-    if (filters.user_id) params.append('user_id', filters.user_id.toString());
-    
-    const queryString = params.toString();
-    const endpoint = queryString ? `/admin/analytics/usage?${queryString}` : '/admin/analytics/usage';
-    
+    const endpoint = `/admin/analytics/usage?days=${days}`;
     return apiService.get<UsageStats>(endpoint);
   }
 
-  // Get daily usage trends
+  // Get daily usage trends - simulate with current data
   static async getDailyUsage(filters: AnalyticsFilters = {}): Promise<DailyUsage[]> {
-    const params = new URLSearchParams();
-    
-    if (filters.start_date) params.append('start_date', filters.start_date);
-    if (filters.end_date) params.append('end_date', filters.end_date);
-    if (filters.user_id) params.append('user_id', filters.user_id.toString());
-    
-    const queryString = params.toString();
-    const endpoint = queryString ? `/admin/analytics/daily-usage?${queryString}` : '/admin/analytics/daily-usage';
-    
-    return apiService.get<DailyUsage[]>(endpoint);
+    // For now, return empty array since backend doesn't have this endpoint
+    // TODO: Implement proper daily usage endpoint in backend
+    return [];
   }
 
   // Get intent classification distribution
   static async getIntentDistribution(filters: AnalyticsFilters = {}): Promise<IntentDistribution[]> {
-    const params = new URLSearchParams();
+    // Get usage stats which includes intent_distribution
+    const usageStats = await this.getUsageStats(filters);
     
-    if (filters.start_date) params.append('start_date', filters.start_date);
-    if (filters.end_date) params.append('end_date', filters.end_date);
-    if (filters.user_id) params.append('user_id', filters.user_id.toString());
+    // Convert intent_distribution object to array format
+    const intentData: IntentDistribution[] = [];
+    const totalIntents = Object.values(usageStats.intent_distribution || {}).reduce((sum, count) => sum + count, 0);
     
-    const queryString = params.toString();
-    const endpoint = queryString ? `/admin/analytics/intent-distribution?${queryString}` : '/admin/analytics/intent-distribution';
+    for (const [intent, count] of Object.entries(usageStats.intent_distribution || {})) {
+      intentData.push({
+        intent,
+        count,
+        percentage: totalIntents > 0 ? (count / totalIntents) * 100 : 0
+      });
+    }
     
-    return apiService.get<IntentDistribution[]>(endpoint);
+    return intentData;
   }
 
   // Get top users by usage
   static async getTopUsers(filters: AnalyticsFilters = {}, limit: number = 10): Promise<UserUsageStats[]> {
-    const params = new URLSearchParams();
-    
-    if (filters.start_date) params.append('start_date', filters.start_date);
-    if (filters.end_date) params.append('end_date', filters.end_date);
-    params.append('limit', limit.toString());
-    
-    const queryString = params.toString();
-    const endpoint = queryString ? `/admin/analytics/top-users?${queryString}` : '/admin/analytics/top-users';
-    
-    return apiService.get<UserUsageStats[]>(endpoint);
+    // For now, return empty array since backend doesn't have this endpoint
+    // TODO: Implement proper top users endpoint in backend
+    return [];
   }
 
   // Get deviation score trends
   static async getDeviationTrends(filters: AnalyticsFilters = {}): Promise<DeviationTrends[]> {
-    const params = new URLSearchParams();
-    
-    if (filters.start_date) params.append('start_date', filters.start_date);
-    if (filters.end_date) params.append('end_date', filters.end_date);
-    if (filters.user_id) params.append('user_id', filters.user_id.toString());
-    
-    const queryString = params.toString();
-    const endpoint = queryString ? `/admin/analytics/deviation-trends?${queryString}` : '/admin/analytics/deviation-trends';
-    
-    return apiService.get<DeviationTrends[]>(endpoint);
+    // For now, return empty array since backend doesn't have this endpoint
+    // TODO: Implement proper deviation trends endpoint in backend
+    return [];
   }
 
   // Get system health metrics
@@ -124,6 +109,15 @@ export class AnalyticsService {
     active_connections: number;
     queue_size: number;
   }> {
-    return apiService.get('/admin/analytics/system-health');
+    // For now, return mock data since backend doesn't have this endpoint
+    // TODO: Implement proper system health endpoint in backend
+    return {
+      uptime: 86400, // 1 day in seconds
+      cpu_usage: 15.5,
+      memory_usage: 45.2,
+      disk_usage: 68.7,
+      active_connections: 12,
+      queue_size: 0
+    };
   }
 }
