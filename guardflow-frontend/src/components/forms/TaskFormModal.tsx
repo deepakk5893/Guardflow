@@ -22,8 +22,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
     category: 'coding',
     difficulty_level: 'beginner',
     estimated_hours: 1,
-    max_tokens_per_request: 1000,
-    daily_quota_limit: 10000,
+    token_limit: 10000,
     is_active: true
   });
 
@@ -40,8 +39,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
           category: task.category,
           difficulty_level: task.difficulty_level,
           estimated_hours: task.estimated_hours,
-          max_tokens_per_request: task.max_tokens_per_request,
-          daily_quota_limit: task.daily_quota_limit,
+          token_limit: task.token_limit,
           is_active: task.is_active
         });
       } else {
@@ -52,8 +50,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
           category: 'coding',
           difficulty_level: 'beginner',
           estimated_hours: 1,
-          max_tokens_per_request: 1000,
-          daily_quota_limit: 10000,
+          token_limit: 10000,
           is_active: true
         });
       }
@@ -82,16 +79,11 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
       newErrors.estimated_hours = 'Estimated hours cannot exceed 1000';
     }
 
-    if (formData.max_tokens_per_request < 100) {
-      newErrors.max_tokens_per_request = 'Max tokens per request must be at least 100';
-    } else if (formData.max_tokens_per_request > 100000) {
-      newErrors.max_tokens_per_request = 'Max tokens per request cannot exceed 100,000';
-    }
 
-    if (formData.daily_quota_limit < 1000) {
-      newErrors.daily_quota_limit = 'Daily quota limit must be at least 1,000';
-    } else if (formData.daily_quota_limit > 1000000) {
-      newErrors.daily_quota_limit = 'Daily quota limit cannot exceed 1,000,000';
+    if (formData.token_limit < 1000) {
+      newErrors.token_limit = 'Token limit must be at least 1,000';
+    } else if (formData.token_limit > 1000000) {
+      newErrors.token_limit = 'Token limit cannot exceed 1,000,000';
     }
 
     setErrors(newErrors);
@@ -244,51 +236,27 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
             )}
           </div>
 
-          {/* Token Limits */}
-          <div id="task-limits" className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div id="task-max-tokens-field">
-              <label htmlFor="task-max-tokens" className="block text-sm font-medium text-gray-700 mb-1">
-                Max Tokens per Request *
-              </label>
-              <input
-                type="number"
-                id="task-max-tokens"
-                min="100"
-                max="100000"
-                step="100"
-                value={formData.max_tokens_per_request}
-                onChange={(e) => handleInputChange('max_tokens_per_request', parseInt(e.target.value))}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.max_tokens_per_request ? 'border-red-300' : 'border-gray-300'
-                }`}
-                disabled={isLoading}
-              />
-              {errors.max_tokens_per_request && (
-                <p className="mt-1 text-sm text-red-600">{errors.max_tokens_per_request}</p>
-              )}
-            </div>
-
-            <div id="task-daily-quota-field">
-              <label htmlFor="task-daily-quota" className="block text-sm font-medium text-gray-700 mb-1">
-                Daily Quota Limit *
-              </label>
-              <input
-                type="number"
-                id="task-daily-quota"
-                min="1000"
-                max="1000000"
-                step="1000"
-                value={formData.daily_quota_limit}
-                onChange={(e) => handleInputChange('daily_quota_limit', parseInt(e.target.value))}
-                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.daily_quota_limit ? 'border-red-300' : 'border-gray-300'
-                }`}
-                disabled={isLoading}
-              />
-              {errors.daily_quota_limit && (
-                <p className="mt-1 text-sm text-red-600">{errors.daily_quota_limit}</p>
-              )}
-            </div>
+          {/* Token Limit */}
+          <div id="task-token-limit-field">
+            <label htmlFor="task-token-limit" className="block text-sm font-medium text-gray-700 mb-1">
+              Token Limit *
+            </label>
+            <input
+              type="number"
+              id="task-token-limit"
+              min="1000"
+              max="1000000"
+              step="1000"
+              value={formData.token_limit}
+              onChange={(e) => handleInputChange('token_limit', parseInt(e.target.value))}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                errors.token_limit ? 'border-red-300' : 'border-gray-300'
+              }`}
+              disabled={isLoading}
+            />
+            {errors.token_limit && (
+              <p className="mt-1 text-sm text-red-600">{errors.token_limit}</p>
+            )}
           </div>
 
           {/* Active Status */}

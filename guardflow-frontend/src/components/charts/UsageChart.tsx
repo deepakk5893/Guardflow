@@ -4,37 +4,34 @@ import type { DailyUsage } from '../../services/analytics';
 interface UsageChartProps {
   data: DailyUsage[];
   height?: number;
-  type?: 'requests' | 'tokens' | 'users';
+  type?: 'tokens' | 'users';
 }
 
 export const UsageChart: React.FC<UsageChartProps> = ({ 
   data, 
   height = 300, 
-  type = 'requests' 
+  type = 'tokens' 
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const getDataValue = (item: DailyUsage) => {
     switch (type) {
-      case 'tokens': return item.tokens;
       case 'users': return item.unique_users;
-      default: return item.requests;
+      default: return item.tokens;
     }
   };
 
   const getChartTitle = () => {
     switch (type) {
-      case 'tokens': return 'Token Usage Over Time';
       case 'users': return 'Unique Users Over Time';
-      default: return 'API Requests Over Time';
+      default: return 'Token Usage Over Time';
     }
   };
 
   const getChartColor = () => {
     switch (type) {
-      case 'tokens': return '#10b981'; // green
       case 'users': return '#8b5cf6'; // purple
-      default: return '#3b82f6'; // blue
+      default: return '#10b981'; // green
     }
   };
 

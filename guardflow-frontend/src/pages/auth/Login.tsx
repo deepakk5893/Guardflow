@@ -1,16 +1,23 @@
 import React, { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 export const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login, isAuthenticated, isLoading } = useAuth();
+  const { login, isAuthenticated, isLoading, user } = useAuth();
+  const location = useLocation();
 
   // Redirect if already authenticated
   if (isAuthenticated) {
-    return <Navigate to="/admin" replace />;
+    // Get the intended destination from state, or default based on user type
+    const fromLocation = location.state?.from;
+    const from = fromLocation 
+      ? `${fromLocation.pathname}${fromLocation.search || ''}` 
+      : (user?.email === import.meta.env.VITE_ADMIN_EMAIL ? '/admin' : '/dashboard');
+    console.log('Redirecting authenticated user to:', from);
+    return <Navigate to={from} replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

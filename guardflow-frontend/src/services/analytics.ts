@@ -13,7 +13,6 @@ export interface UsageStats {
 
 export interface DailyUsage {
   date: string;
-  requests: number;
   tokens: number;
   unique_users: number;
 }

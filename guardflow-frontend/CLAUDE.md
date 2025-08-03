@@ -279,11 +279,46 @@ VITE_ENABLE_ANALYTICS=true
 - **Form State**: Controlled components with validation
 - **Modal State**: Proper modal lifecycle management
 
+#### User Dashboard (Self-Service Portal)
+- **Location**: `/dashboard/*`
+- **Components**:
+  - `src/pages/user/Dashboard.tsx` - Main user dashboard with overview
+  - `src/pages/user/Usage.tsx` - User usage analytics and quota tracking
+  - `src/pages/user/History.tsx` - Personal request history viewer
+  - `src/components/common/UserLayout.tsx` - User dashboard layout and routing
+  - `src/services/userDashboard.ts` - User-specific API service
+  - `src/styles/userDashboard.css` - Dashboard styling
+  - `src/styles/userUsage.css` - Usage analytics styling
+  - `src/styles/userHistory.css` - History page styling
+- **Features**:
+  - **Real-time quota monitoring** with visual progress bars
+  - **Alert system** for quota limits, deviation scores, and blocks
+  - **Usage analytics** with time range selection (7d, 30d, 90d)
+  - **Personal request history** with filtering and search
+  - **Export functionality** for personal data in CSV format
+  - **Task assignment tracking** and progress viewing
+  - **Profile management** (limited user-editable fields)
+  - **Visual charts** for usage trends using reusable chart components
+  - **Responsive design** optimized for mobile and desktop
+
+#### Password Management System
+- **Admin User Creation**: Updated CreateUserModal to include password fields with validation
+- **User Profile Management**: Complete profile page with password change functionality
+- **API Integration**: 
+  - `UserService.changeUserPassword()` - Admin can reset user passwords
+  - `UserDashboardService.changePassword()` - Users can change their own passwords
+- **Security Features**:
+  - Password confirmation validation
+  - Minimum 6 character requirement
+  - Current password verification for changes
+  - Form validation and error handling
+
 ### Next Steps
-- Build User Dashboard for self-service portal
+- Build remaining User Dashboard features (Tasks)
 - Implement WebSocket real-time updates
 - Add more advanced analytics features
 - Create task assignment tracking views
 - Implement notification system
+- Backend API integration testing
 
 Track frontend development in `docs/development/progress.md`

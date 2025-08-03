@@ -224,10 +224,6 @@ export const Analytics: React.FC = () => {
 
       {/* Charts Grid */}
       <div id="analytics-charts" className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="lg:col-span-2">
-          <UsageChart data={dailyUsage} type="requests" height={300} />
-        </div>
-        
         <UsageChart data={dailyUsage} type="tokens" height={250} />
         <UsageChart data={dailyUsage} type="users" height={250} />
         

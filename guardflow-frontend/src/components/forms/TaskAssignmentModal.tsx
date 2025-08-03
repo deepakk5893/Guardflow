@@ -115,7 +115,7 @@ export const TaskAssignmentModal: React.FC<TaskAssignmentModalProps> = ({
             </div>
             <div>
               <span className="font-medium text-gray-700">Daily Limit:</span>
-              <span className="ml-2 text-gray-900">{task.daily_quota_limit.toLocaleString()}</span>
+              <span className="ml-2 text-gray-900">{task.token_limit.toLocaleString()}</span>
             </div>
           </div>
           <div className="mt-3">

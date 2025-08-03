@@ -79,4 +79,5 @@ class ApiService {
   }
 }
 
+export { ApiService };
 export const apiService = new ApiService();

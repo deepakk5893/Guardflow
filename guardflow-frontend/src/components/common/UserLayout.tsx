@@ -2,33 +2,18 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
-
-// Placeholder user pages (will be created next)
-const UserDashboard = () => (
-  <div id="user-dashboard-placeholder" className="p-6">
-    <h1 className="text-2xl font-bold text-gray-900">User Dashboard</h1>
-    <p className="text-gray-600">Welcome to your dashboard</p>
-  </div>
-);
-
-const UserUsage = () => (
-  <div id="user-usage-placeholder" className="p-6">
-    <h1 className="text-2xl font-bold text-gray-900">Usage History</h1>
-    <p className="text-gray-600">View your API usage history</p>
-  </div>
-);
-
-const UserProfile = () => (
-  <div id="user-profile-placeholder" className="p-6">
-    <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
-    <p className="text-gray-600">Manage your profile settings</p>
-  </div>
-);
+import { UserDashboard } from '../../pages/user/Dashboard';
+import { UserUsage } from '../../pages/user/Usage';
+import { UserHistory } from '../../pages/user/History';
+import { UserProfile } from '../../pages/user/Profile';
+import { UserTasks } from '../../pages/user/Tasks';
 
 export const UserLayout: React.FC = () => {
   const userNavItems = [
-    { path: '/dashboard', label: 'Dashboard', icon: '🏠' },
-    { path: '/dashboard/usage', label: 'Usage', icon: '📊' },
+    { path: '/dashboard', label: 'Dashboard', icon: '📊' },
+    { path: '/dashboard/usage', label: 'Usage', icon: '📈' },
+    { path: '/dashboard/history', label: 'History', icon: '📝' },
+    { path: '/dashboard/tasks', label: 'My Tasks', icon: '📋' },
     { path: '/dashboard/profile', label: 'Profile', icon: '👤' },
   ];
 
@@ -43,6 +28,8 @@ export const UserLayout: React.FC = () => {
           <Routes>
             <Route path="/" element={<UserDashboard />} />
             <Route path="/usage" element={<UserUsage />} />
+            <Route path="/history" element={<UserHistory />} />
+            <Route path="/tasks" element={<UserTasks />} />
             <Route path="/profile" element={<UserProfile />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>

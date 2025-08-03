@@ -1,0 +1,350 @@
+/* User Profile Styles */
+
+/* Page layout */
+#user-profile-page {
+  background-color: #f9fafb;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+/* Header section */
+#profile-header {
+  margin-bottom: 24px;
+}
+
+#profile-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+#profile-header p {
+  color: #6b7280;
+  margin: 4px 0 0 0;
+  font-size: 16px;
+}
+
+/* Grid layout */
+#user-profile-page .grid {
+  display: grid;
+  gap: 24px;
+}
+
+#user-profile-page .grid-cols-1 {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 1024px) {
+  #user-profile-page .grid-cols-1.lg\\:grid-cols-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  #account-stats-section .grid-cols-1.md\\:grid-cols-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  #account-stats-section .grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Profile sections */
+#profile-info-section,
+#security-section,
+#account-stats-section {
+  background-color: white;
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+#profile-info-section .flex,
+#security-section .flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+#profile-info-section h2,
+#security-section h2,
+#account-stats-section h2 {
+  font-size: 18px;
+  font-weight: 500;
+  color: #1f2937;
+  margin: 0;
+}
+
+/* Edit buttons */
+#edit-profile-btn,
+#change-password-btn {
+  color: #2563eb;
+  font-size: 14px;
+  font-weight: 500;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+#edit-profile-btn:hover,
+#change-password-btn:hover {
+  color: #1d4ed8;
+}
+
+/* Form fields */
+#profile-info-section .space-y-4 > div,
+#security-section .space-y-4 > div {
+  margin-bottom: 16px;
+}
+
+#profile-info-section .space-y-4 > div:last-child,
+#security-section .space-y-4 > div:last-child {
+  margin-bottom: 0;
+}
+
+#profile-info-section label,
+#security-section label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+#profile-info-section input,
+#security-section input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  background-color: white;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#profile-info-section input:focus,
+#security-section input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Static profile information */
+#profile-info-section p {
+  margin-top: 4px;
+  color: #1f2937;
+  font-size: 14px;
+}
+
+#profile-info-section .text-xs {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Form actions */
+#profile-form-actions,
+#password-form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+#profile-form-actions button,
+#password-form-actions button {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border: none;
+}
+
+/* Button styles */
+#profile-form-actions button[type="submit"],
+#password-form-actions button[type="submit"] {
+  background-color: #2563eb;
+  color: white;
+}
+
+#profile-form-actions button[type="submit"]:hover,
+#password-form-actions button[type="submit"]:hover {
+  background-color: #1d4ed8;
+}
+
+#profile-form-actions button[type="submit"]:disabled,
+#password-form-actions button[type="submit"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#profile-form-actions button[type="button"],
+#password-form-actions button[type="button"] {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+#profile-form-actions button[type="button"]:hover,
+#password-form-actions button[type="button"]:hover {
+  background-color: #e5e7eb;
+}
+
+/* Error messages */
+#profile-info-section .text-red-600,
+#security-section .text-red-600 {
+  color: #dc2626;
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+/* Error box */
+#security-section .bg-red-50 {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+/* Security tip */
+#security-section .bg-blue-50 {
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+#security-section .bg-blue-50 p {
+  font-size: 14px;
+  margin: 0;
+}
+
+#security-section .bg-blue-50 strong {
+  font-weight: 600;
+}
+
+/* Account statistics */
+#account-stats-section {
+  margin-top: 24px;
+}
+
+#account-stats-section .grid {
+  display: grid;
+  gap: 16px;
+}
+
+#account-stats-section .bg-gray-50 {
+  background-color: #f9fafb;
+  padding: 16px;
+  border-radius: 8px;
+}
+
+#account-stats-section .bg-gray-50 label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+#account-stats-section .bg-gray-50 p {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+/* Loading state */
+#profile-loading {
+  padding: 24px;
+}
+
+#profile-loading .flex {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#profile-loading .animate-spin {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #3b82f6;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+#profile-loading span {
+  color: #374151;
+}
+
+/* Error state */
+#profile-error {
+  padding: 24px;
+}
+
+#profile-error > div {
+  background-color: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 12px 16px;
+  border-radius: 8px;
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+  #user-profile-page .grid.lg\\:grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  #user-profile-page {
+    padding: 16px;
+  }
+  
+  #profile-header h1 {
+    font-size: 24px;
+  }
+  
+  #profile-info-section,
+  #security-section,
+  #account-stats-section {
+    padding: 16px;
+  }
+  
+  #account-stats-section .grid.md\\:grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+  
+  #account-stats-section .grid.lg\\:grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  #profile-form-actions,
+  #password-form-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  #profile-form-actions button,
+  #password-form-actions button {
+    width: 100%;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

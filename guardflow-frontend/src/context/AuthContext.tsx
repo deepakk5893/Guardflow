@@ -69,10 +69,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Check for existing token on app load
     const token = localStorage.getItem('auth_token');
     if (token) {
-      // TODO: Validate token and get user info
-      dispatch({ type: 'LOGIN_SUCCESS', payload: { token, user: {} as User } });
+      // Validate token and get user info
+      validateTokenAndGetUser(token);
     }
   }, []);
+
+  const validateTokenAndGetUser = async (token: string) => {
+    try {
+      const user = await apiService.get<User>('/auth/me');
+      dispatch({ type: 'LOGIN_SUCCESS', payload: { token, user } });
+    } catch (error) {
+      // Token is invalid, remove it
+      localStorage.removeItem('auth_token');
+      dispatch({ type: 'LOGOUT' });
+    }
+  };
 
   const login = async (credentials: LoginRequest) => {
     dispatch({ type: 'LOGIN_START' });

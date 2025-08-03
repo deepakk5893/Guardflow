@@ -1,0 +1,446 @@
+/* User Dashboard Styles */
+
+/* Page layout */
+#user-dashboard-page {
+  background-color: #f9fafb;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+/* Welcome section */
+#dashboard-welcome h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+#dashboard-welcome p {
+  color: #6b7280;
+  font-size: 16px;
+  margin: 0;
+}
+
+/* Alerts section */
+#dashboard-alerts {
+  margin-bottom: 24px;
+}
+
+#dashboard-alerts > div {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+#dashboard-alerts > div:last-child {
+  margin-bottom: 0;
+}
+
+#dashboard-alerts .flex {
+  display: flex;
+  align-items: flex-start;
+}
+
+#dashboard-alerts .font-medium {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+#dashboard-alerts .text-sm {
+  font-size: 14px;
+}
+
+/* Alert colors */
+#dashboard-alerts .bg-red-50 {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+#dashboard-alerts .bg-yellow-50 {
+  background-color: #fefce8;
+  border-color: #fde68a;
+  color: #d97706;
+}
+
+#dashboard-alerts .bg-orange-50 {
+  background-color: #fff7ed;
+  border-color: #fed7aa;
+  color: #ea580c;
+}
+
+/* Quota overview */
+#quota-overview {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+@media (min-width: 768px) {
+  #quota-overview {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+#daily-quota-card,
+#monthly-quota-card {
+  background-color: white;
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+#daily-quota-card .flex,
+#monthly-quota-card .flex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+#daily-quota-card h3,
+#monthly-quota-card h3 {
+  font-size: 18px;
+  font-weight: 500;
+  color: #1f2937;
+  margin: 0;
+}
+
+#daily-quota-card .space-y-3 > div,
+#monthly-quota-card .space-y-3 > div {
+  margin-bottom: 12px;
+}
+
+#daily-quota-card .space-y-3 > div:last-child,
+#monthly-quota-card .space-y-3 > div:last-child {
+  margin-bottom: 0;
+}
+
+/* Progress bars */
+.w-full.bg-gray-200 {
+  width: 100%;
+  background-color: #e5e7eb;
+  border-radius: 9999px;
+  height: 12px;
+}
+
+.bg-green-500 {
+  background-color: #10b981;
+}
+
+.bg-yellow-500 {
+  background-color: #f59e0b;
+}
+
+.bg-red-500 {
+  background-color: #ef4444;
+}
+
+/* Usage statistics */
+#usage-stats {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+@media (min-width: 768px) {
+  #usage-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  #usage-stats {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+#total-requests-card,
+#success-rate-card,
+#tokens-used-card,
+#deviation-score-card {
+  background-color: white;
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+#usage-stats .flex {
+  display: flex;
+  align-items: center;
+}
+
+#usage-stats .flex-shrink-0 > div {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+#usage-stats .ml-4 {
+  margin-left: 16px;
+}
+
+#usage-stats p {
+  margin: 0;
+}
+
+#usage-stats .text-sm {
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+#usage-stats .text-2xl {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-top: 4px;
+}
+
+/* Stat colors */
+#total-requests-card .w-8 {
+  background-color: #dbeafe;
+}
+
+#success-rate-card .w-8 {
+  background-color: #d1fae5;
+}
+
+#tokens-used-card .w-8 {
+  background-color: #e9d5ff;
+}
+
+#deviation-score-card .w-8 {
+  background-color: #fed7aa;
+}
+
+/* Score colors */
+.text-green-600 {
+  color: #16a34a;
+}
+
+.text-yellow-600 {
+  color: #d97706;
+}
+
+.text-red-600 {
+  color: #dc2626;
+}
+
+/* Bottom section */
+#dashboard-bottom {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+@media (min-width: 1024px) {
+  #dashboard-bottom {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Active tasks card */
+#active-tasks-card {
+  background-color: white;
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+#active-tasks-card h3 {
+  font-size: 18px;
+  font-weight: 500;
+  color: #1f2937;
+  margin-bottom: 16px;
+}
+
+#active-tasks-card .space-y-4 > div {
+  margin-bottom: 16px;
+}
+
+#active-tasks-card .space-y-4 > div:last-child {
+  margin-bottom: 0;
+}
+
+#active-tasks-card [id^="task-"] {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+#active-tasks-card [id^="task-"] .flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+#active-tasks-card [id^="task-"] h4 {
+  font-weight: 500;
+  color: #1f2937;
+  margin: 0;
+}
+
+#active-tasks-card [id^="task-"] span {
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 9999px;
+}
+
+#active-tasks-card [id^="task-"] p {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 12px;
+}
+
+#active-tasks-card [id^="task-"] .text-xs {
+  font-size: 12px;
+  color: #6b7280;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Status colors */
+.bg-green-100 { background-color: #dcfce7; color: #166534; }
+.bg-blue-100 { background-color: #dbeafe; color: #1e40af; }
+.bg-gray-100 { background-color: #f3f4f6; color: #374151; }
+
+#active-tasks-card .text-center a {
+  color: #2563eb;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+#active-tasks-card .text-center a:hover {
+  color: #1d4ed8;
+}
+
+/* Quick stats card */
+#quick-stats-card {
+  background-color: white;
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+#quick-stats-card h3 {
+  font-size: 18px;
+  font-weight: 500;
+  color: #1f2937;
+  margin-bottom: 16px;
+}
+
+#quick-stats-card .space-y-3 > div {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+#quick-stats-card .space-y-3 > div:last-child {
+  margin-bottom: 0;
+}
+
+#quick-stats-card .text-sm {
+  font-size: 14px;
+}
+
+#quick-stats-card .text-gray-600 {
+  color: #6b7280;
+}
+
+#quick-stats-card .font-medium {
+  font-weight: 500;
+  color: #1f2937;
+}
+
+/* Loading state */
+#dashboard-loading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+#dashboard-loading > div {
+  background-color: white;
+  padding: 24px;
+  border-radius: 12px;
+}
+
+#dashboard-loading .flex {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#dashboard-loading .animate-spin {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #3b82f6;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+#dashboard-loading span {
+  color: #374151;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  #user-dashboard-page {
+    padding: 16px;
+  }
+  
+  #dashboard-welcome h1 {
+    font-size: 24px;
+  }
+  
+  #quota-overview {
+    grid-template-columns: 1fr;
+  }
+  
+  #usage-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  #dashboard-bottom {
+    grid-template-columns: 1fr;
+  }
+  
+  #daily-quota-card,
+  #monthly-quota-card,
+  #total-requests-card,
+  #success-rate-card,
+  #tokens-used-card,
+  #deviation-score-card,
+  #active-tasks-card,
+  #quick-stats-card {
+    padding: 16px;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

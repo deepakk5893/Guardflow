@@ -4,6 +4,7 @@ import type { User } from '../types/auth';
 export interface CreateUserRequest {
   email: string;
   name: string;
+  password: string;
   daily_quota?: number;
   monthly_quota?: number;
   requests_per_hour?: number;
@@ -50,5 +51,10 @@ export class UserService {
   // Unblock user
   static async unblockUser(userId: number): Promise<{ message: string }> {
     return apiService.post<{ message: string }>(`/admin/users/${userId}/unblock`);
+  }
+
+  // Change password (for admin resetting user passwords)
+  static async changeUserPassword(userId: number, newPassword: string): Promise<{ message: string }> {
+    return apiService.post<{ message: string }>(`/admin/users/${userId}/change-password`, { password: newPassword });
   }
 }

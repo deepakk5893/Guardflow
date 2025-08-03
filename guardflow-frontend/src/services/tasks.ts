@@ -7,14 +7,13 @@ export interface Task {
   category: 'coding' | 'testing' | 'documentation' | 'research' | 'other';
   difficulty_level: 'beginner' | 'intermediate' | 'advanced';
   estimated_hours: number;
-  max_tokens_per_request: number;
-  daily_quota_limit: number;
+  token_limit: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
   assigned_users_count?: number;
   total_requests?: number;
-  success_rate?: number;
+  has_assignments?: boolean;
 }
 
 export interface CreateTaskRequest {
@@ -23,8 +22,7 @@ export interface CreateTaskRequest {
   category: 'coding' | 'testing' | 'documentation' | 'research' | 'other';
   difficulty_level: 'beginner' | 'intermediate' | 'advanced';
   estimated_hours: number;
-  max_tokens_per_request: number;
-  daily_quota_limit: number;
+  token_limit: number;
   is_active?: boolean;
 }
 

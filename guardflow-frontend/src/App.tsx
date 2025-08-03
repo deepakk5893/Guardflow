@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import { Login } from './pages/auth/Login';
 import { AdminLayout } from './components/common/AdminLayout';
 import { UserLayout } from './components/common/UserLayout';
+import { Chat } from './pages/chat/Chat';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import './styles/dashboard.css';
 
@@ -45,6 +46,16 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <UserLayout />
+                    </ProtectedRoute>
+                  }
+                />
+                
+                {/* Chat Route */}
+                <Route
+                  path="/chat"
+                  element={
+                    <ProtectedRoute>
+                      <Chat />
                     </ProtectedRoute>
                   }
                 />
