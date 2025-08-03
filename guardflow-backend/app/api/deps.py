@@ -124,16 +124,12 @@ def check_rate_limit(
     redis_client.expire(rate_limit_key, 3600)  # 1 hour TTL
 
 
-def check_quota(user: User, estimated_tokens: int = 0) -> None:
-    """Check if user has sufficient quota"""
-    if user.current_daily_usage + estimated_tokens > user.daily_quota:
-        raise HTTPException(
-            status_code=status.HTTP_402_PAYMENT_REQUIRED,
-            detail="Daily quota exceeded"
-        )
+def check_task_quota(chat_tokens_used: int, task_token_limit: int, estimated_tokens: int = 0) -> None:
+    """Check if task has sufficient token quota remaining"""
+    total_needed = chat_tokens_used + estimated_tokens
     
-    if user.current_monthly_usage + estimated_tokens > user.monthly_quota:
+    if total_needed > task_token_limit:
         raise HTTPException(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
-            detail="Monthly quota exceeded"
+            detail=f"Task token limit exceeded. Used: {chat_tokens_used}, Need: {estimated_tokens}, Limit: {task_token_limit}"
         )

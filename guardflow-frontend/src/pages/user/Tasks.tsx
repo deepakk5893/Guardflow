@@ -126,10 +126,10 @@ export const UserTasks: React.FC = () => {
               <div className="task-card-header">
                 <div className="flex justify-between items-start mb-3">
                   <h3 className="task-title">{task.task_title}</h3>
-                  <span className={getStatusBadge(task.status)}>{task.status}</span>
                 </div>
                 
                 <div className="flex items-center space-x-2 mb-3">
+                  <span className={getStatusBadge(task.status)}>{task.status}</span>
                   <span className="task-category-badge">{task.task_category}</span>
                   <span className={getDifficultyBadge(task.task_difficulty)}>{task.task_difficulty}</span>
                 </div>

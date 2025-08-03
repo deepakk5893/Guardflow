@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON, Float
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
@@ -12,10 +12,19 @@ class Task(Base):
     id = Column(Integer, primary_key=True, index=True)
     
     # Basic info
-    name = Column(String(255), nullable=False)
+    title = Column(String(255), nullable=False)  # Changed from 'name' to 'title'
     description = Column(Text)
     
-    # Task configuration
+    # Task categorization
+    category = Column(String(50), default="other")
+    difficulty_level = Column(String(20), default="beginner")
+    
+    # Task limits and quotas
+    estimated_hours = Column(Float)
+    token_limit = Column(Integer, default=10000)
+    max_tokens_per_request = Column(Integer, default=1000)  # Prevent single expensive requests
+    
+    # Task configuration (keeping existing fields for compatibility)
     allowed_intents = Column(JSON, default=list)  # ["coding", "testing", "documentation"]
     task_scope = Column(Text)  # Description of allowed work
     
@@ -31,6 +40,7 @@ class Task(Base):
     creator = relationship("User", back_populates="created_tasks")
     user_tasks = relationship("UserTask", back_populates="task")
     logs = relationship("Log", back_populates="task")
+    alerts = relationship("Alert", back_populates="task")
     
     def __repr__(self):
-        return f"<Task(id={self.id}, name='{self.name}', is_active={self.is_active})>"
+        return f"<Task(id={self.id}, title='{self.title}', is_active={self.is_active})>"

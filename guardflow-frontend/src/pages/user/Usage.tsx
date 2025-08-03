@@ -29,15 +29,6 @@ export const UserUsage: React.FC = () => {
     setTimeRange(days);
   };
 
-  const getUsagePercentage = (used: number, limit: number) => {
-    return limit > 0 ? (used / limit) * 100 : 0;
-  };
-
-  const getUsageColor = (percentage: number) => {
-    if (percentage >= 90) return 'text-red-600';
-    if (percentage >= 75) return 'text-yellow-600';
-    return 'text-green-600';
-  };
 
   const isLoading = statsLoading || usageLoading;
 
@@ -88,81 +79,38 @@ export const UserUsage: React.FC = () => {
         </div>
       </div>
 
-      {/* Current Quota Status */}
+      {/* Current Status */}
       {quotaStatus && (
         <div id="quota-status-section" className="mb-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Current Quota Status</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Daily Quota Detail */}
-            <div id="daily-quota-detail" className="bg-white p-6 rounded-lg border border-gray-200">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Account Status</h2>
+          <div className="grid grid-cols-1 gap-6">
+            <div id="account-status-detail" className="bg-white p-6 rounded-lg border border-gray-200">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Daily Quota</h3>
-                <span className="text-2xl">📅</span>
+                <h3 className="text-lg font-medium text-gray-900">Account Health</h3>
+                <span className="text-2xl">⚡</span>
               </div>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Usage</span>
-                  <span className={`font-semibold ${getUsageColor(quotaStatus.daily.percentage)}`}>
-                    {quotaStatus.daily.used.toLocaleString()} / {quotaStatus.daily.limit.toLocaleString()}
+                  <span className="text-gray-600">Deviation Score</span>
+                  <span className={`font-semibold ${
+                    quotaStatus.deviation_score > 0.7 ? 'text-red-600' :
+                    quotaStatus.deviation_score > 0.5 ? 'text-yellow-600' :
+                    'text-green-600'
+                  }`}>
+                    {quotaStatus.deviation_score.toFixed(2)}
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-4">
-                  <div
-                    className={`h-4 rounded-full transition-all duration-300 ${
-                      quotaStatus.daily.percentage >= 90 ? 'bg-red-500' :
-                      quotaStatus.daily.percentage >= 75 ? 'bg-yellow-500' :
-                      'bg-green-500'
-                    }`}
-                    style={{ width: `${Math.min(100, quotaStatus.daily.percentage)}%` }}
-                  ></div>
-                </div>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-600">Percentage Used</span>
-                    <p className="font-medium text-gray-900">{quotaStatus.daily.percentage.toFixed(1)}%</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Resets At</span>
-                    <p className="font-medium text-gray-900">
-                      {new Date(quotaStatus.daily.reset_time).toLocaleTimeString()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Monthly Quota Detail */}
-            <div id="monthly-quota-detail" className="bg-white p-6 rounded-lg border border-gray-200">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Monthly Quota</h3>
-                <span className="text-2xl">📊</span>
-              </div>
-              <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Usage</span>
-                  <span className={`font-semibold ${getUsageColor(quotaStatus.monthly.percentage)}`}>
-                    {quotaStatus.monthly.used.toLocaleString()} / {quotaStatus.monthly.limit.toLocaleString()}
+                  <span className="text-gray-600">Account Status</span>
+                  <span className={`font-semibold ${
+                    quotaStatus.warnings.blocked_status ? 'text-red-600' :
+                    quotaStatus.warnings.high_deviation_score ? 'text-yellow-600' :
+                    'text-green-600'
+                  }`}>
+                    {quotaStatus.warnings.blocked_status ? 'Blocked' :
+                     quotaStatus.warnings.high_deviation_score ? 'At Risk' :
+                     'Good Standing'}
                   </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-4">
-                  <div
-                    className={`h-4 rounded-full transition-all duration-300 ${
-                      quotaStatus.monthly.percentage >= 90 ? 'bg-red-500' :
-                      quotaStatus.monthly.percentage >= 75 ? 'bg-yellow-500' :
-                      'bg-green-500'
-                    }`}
-                    style={{ width: `${Math.min(100, quotaStatus.monthly.percentage)}%` }}
-                  ></div>
-                </div>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-600">Percentage Used</span>
-                    <p className="font-medium text-gray-900">{quotaStatus.monthly.percentage.toFixed(1)}%</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Resets On</span>
-                    <p className="font-medium text-gray-900">{quotaStatus.monthly.reset_date}</p>
-                  </div>
                 </div>
               </div>
             </div>
@@ -197,22 +145,6 @@ export const UserUsage: React.FC = () => {
                 <div className="flex justify-between">
                   <span className="text-gray-600">Total Tokens Used</span>
                   <span className="font-medium text-gray-900">{userStats.total_tokens_used.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Daily Quota Used</span>
-                  <span className="font-medium text-blue-600">{userStats.daily_quota_used.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Daily Quota Limit</span>
-                  <span className="font-medium text-gray-600">{userStats.daily_quota_limit.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Monthly Quota Used</span>
-                  <span className="font-medium text-purple-600">{userStats.monthly_quota_used.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Monthly Quota Limit</span>
-                  <span className="font-medium text-gray-600">{userStats.monthly_quota_limit.toLocaleString()}</span>
                 </div>
               </div>
             </div>

@@ -2,10 +2,6 @@ import { apiService } from './api';
 
 export interface UserStats {
   total_tokens_used: number;
-  daily_quota_used: number;
-  daily_quota_limit: number;
-  monthly_quota_used: number;
-  monthly_quota_limit: number;
   current_deviation_score: number;
 }
 
@@ -51,26 +47,11 @@ export interface UserProfile {
   is_blocked: boolean;
   current_deviation_score: number;
   total_tokens_used: number;
-  daily_quota_limit: number;
-  monthly_quota_limit: number;
 }
 
 export interface UserQuotaStatus {
-  daily: {
-    used: number;
-    limit: number;
-    percentage: number;
-    reset_time: string;
-  };
-  monthly: {
-    used: number;
-    limit: number;
-    percentage: number;
-    reset_date: string;
-  };
+  deviation_score: number;
   warnings: {
-    near_daily_limit: boolean;
-    near_monthly_limit: boolean;
     high_deviation_score: boolean;
     blocked_status: boolean;
   };

@@ -8,6 +8,7 @@ export interface Task {
   difficulty_level: 'beginner' | 'intermediate' | 'advanced';
   estimated_hours: number;
   token_limit: number;
+  max_tokens_per_request?: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -23,6 +24,7 @@ export interface CreateTaskRequest {
   difficulty_level: 'beginner' | 'intermediate' | 'advanced';
   estimated_hours: number;
   token_limit: number;
+  max_tokens_per_request?: number;
   is_active?: boolean;
 }
 

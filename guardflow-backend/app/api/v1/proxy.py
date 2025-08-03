@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.database import get_db
-from app.api.deps import get_current_user_from_api_token, check_rate_limit, check_quota
+from app.api.deps import get_current_user_from_api_token, check_rate_limit, check_task_quota
 from app.models.user import User
 from app.models.user_task import UserTask
 from app.schemas.proxy import ChatCompletionRequest, ChatCompletionResponse
@@ -34,29 +34,47 @@ async def chat_completions(
     # Check rate limiting
     check_rate_limit(current_user)
     
-    # Estimate tokens for quota check (rough estimate)
-    estimated_tokens = sum(len(msg.content.split()) for msg in request.messages) * 1.3
-    check_quota(current_user, int(estimated_tokens))
-    
-    # Validate task assignment
-    if request.task_id:
-        # Check if user is assigned to this task
-        user_task = db.query(UserTask).filter(
-            UserTask.user_id == current_user.id,
-            UserTask.task_id == request.task_id,
-            UserTask.is_active == True
-        ).first()
-        
-        if not user_task:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="User is not assigned to this task"
-            )
-    else:
+    # Validate task assignment first
+    if not request.task_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="task_id is required"
         )
+    
+    # Check if user is assigned to this task
+    user_task = db.query(UserTask).filter(
+        UserTask.user_id == current_user.id,
+        UserTask.task_id == request.task_id,
+        UserTask.is_active == True
+    ).first()
+    
+    if not user_task:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User is not assigned to this task"
+        )
+    
+    # Get task details for quota checking
+    task = user_task.task
+    if not task or not task.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Task is not active"
+        )
+    
+    # Calculate current task usage (from logs, not including chat tokens)
+    from app.models.log import Log
+    task_logs = db.query(Log).filter(
+        Log.user_id == current_user.id,
+        Log.task_id == task.id
+    ).all()
+    current_task_usage = sum(log.openai_tokens_used or 0 for log in task_logs)
+    
+    # Estimate tokens for this request (rough estimate)
+    estimated_tokens = sum(len(msg.content.split()) for msg in request.messages) * 1.4
+    
+    # Check task quota
+    check_task_quota(current_task_usage, task.token_limit, int(estimated_tokens))
     
     # Initialize proxy service
     proxy_service = ProxyService(db)

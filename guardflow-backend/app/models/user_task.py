@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Boolean, DateTime, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, Boolean, DateTime, ForeignKey, UniqueConstraint, Text
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
@@ -19,6 +19,12 @@ class UserTask(Base):
     assigned_at = Column(DateTime(timezone=True), server_default=func.now())
     is_active = Column(Boolean, default=True)
     assigned_by = Column(Integer, ForeignKey("users.id"))
+    
+    # Progress tracking
+    progress_notes = Column(Text)
+    completed_at = Column(DateTime(timezone=True))
+    
+    # No task-specific limits needed - use task.token_limit
     
     # Constraints
     __table_args__ = (

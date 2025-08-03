@@ -103,10 +103,15 @@ class AdminService:
         """Create a new task"""
         
         task = Task(
-            name=task_data.name,
+            title=task_data.title,
             description=task_data.description,
+            category=task_data.category,
+            difficulty_level=task_data.difficulty_level,
+            estimated_hours=task_data.estimated_hours,
+            token_limit=task_data.token_limit,
             allowed_intents=task_data.allowed_intents,
             task_scope=task_data.task_scope,
+            is_active=task_data.is_active,
             created_by=created_by
         )
         

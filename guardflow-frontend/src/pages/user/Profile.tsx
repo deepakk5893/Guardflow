@@ -347,27 +347,28 @@ export const UserProfile: React.FC = () => {
       </div>
 
       {/* Account Statistics */}
-      <div id="account-stats-section" className="mt-6 bg-white p-6 rounded-lg border border-gray-200">
-        <h2 className="text-lg font-medium text-gray-900 mb-4">Account Statistics</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <label className="block text-sm font-medium text-gray-500">Total Requests</label>
-            <p className="text-2xl font-semibold text-gray-900">{userProfile.total_requests.toLocaleString()}</p>
-          </div>
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <label className="block text-sm font-medium text-gray-500">Total Tokens</label>
-            <p className="text-2xl font-semibold text-gray-900">{userProfile.total_tokens_used.toLocaleString()}</p>
-          </div>
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <label className="block text-sm font-medium text-gray-500">Daily Quota</label>
-            <p className="text-2xl font-semibold text-gray-900">{userProfile.daily_quota_limit.toLocaleString()}</p>
-          </div>
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <label className="block text-sm font-medium text-gray-500">Monthly Quota</label>
-            <p className="text-2xl font-semibold text-gray-900">{userProfile.monthly_quota_limit.toLocaleString()}</p>
+      {userProfile && (
+        <div id="account-stats-section" className="mt-6 bg-white p-6 rounded-lg border border-gray-200">
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Account Statistics</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <label className="block text-sm font-medium text-gray-500">Total Tokens Used</label>
+              <p className="text-2xl font-semibold text-gray-900">
+                {userProfile.total_tokens_used?.toLocaleString() || '0'}
+              </p>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <label className="block text-sm font-medium text-gray-500">Deviation Score</label>
+              <p className={`text-2xl font-semibold ${
+                (userProfile.current_deviation_score || 0) > 0.7 ? 'text-red-600' : 
+                (userProfile.current_deviation_score || 0) > 0.5 ? 'text-yellow-600' : 'text-green-600'
+              }`}>
+                {(userProfile.current_deviation_score || 0).toFixed(2)}
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

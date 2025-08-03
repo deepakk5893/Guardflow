@@ -23,6 +23,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
     difficulty_level: 'beginner',
     estimated_hours: 1,
     token_limit: 10000,
+    max_tokens_per_request: 1000,
     is_active: true
   });
 
@@ -40,6 +41,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
           difficulty_level: task.difficulty_level,
           estimated_hours: task.estimated_hours,
           token_limit: task.token_limit,
+          max_tokens_per_request: task.max_tokens_per_request || 1000,
           is_active: task.is_active
         });
       } else {
@@ -51,6 +53,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
           difficulty_level: 'beginner',
           estimated_hours: 1,
           token_limit: 10000,
+          max_tokens_per_request: 1000,
           is_active: true
         });
       }
@@ -84,6 +87,14 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
       newErrors.token_limit = 'Token limit must be at least 1,000';
     } else if (formData.token_limit > 1000000) {
       newErrors.token_limit = 'Token limit cannot exceed 1,000,000';
+    }
+
+    if (formData.max_tokens_per_request && formData.max_tokens_per_request < 100) {
+      newErrors.max_tokens_per_request = 'Per-request limit must be at least 100';
+    } else if (formData.max_tokens_per_request && formData.max_tokens_per_request > formData.token_limit) {
+      newErrors.max_tokens_per_request = 'Per-request limit cannot exceed total token limit';
+    } else if (formData.max_tokens_per_request && formData.max_tokens_per_request > 10000) {
+      newErrors.max_tokens_per_request = 'Per-request limit cannot exceed 10,000';
     }
 
     setErrors(newErrors);
@@ -257,6 +268,32 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
             {errors.token_limit && (
               <p className="mt-1 text-sm text-red-600">{errors.token_limit}</p>
             )}
+            <p className="mt-1 text-xs text-gray-500">Total tokens available for this task</p>
+          </div>
+
+          {/* Max Tokens Per Request */}
+          <div id="task-max-tokens-per-request-field">
+            <label htmlFor="task-max-tokens-per-request" className="block text-sm font-medium text-gray-700 mb-1">
+              Max Tokens Per Request
+            </label>
+            <input
+              type="number"
+              id="task-max-tokens-per-request"
+              min="100"
+              max="10000"
+              step="100"
+              value={formData.max_tokens_per_request}
+              onChange={(e) => handleInputChange('max_tokens_per_request', parseInt(e.target.value))}
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                errors.max_tokens_per_request ? 'border-red-300' : 'border-gray-300'
+              }`}
+              placeholder="1000"
+              disabled={isLoading}
+            />
+            {errors.max_tokens_per_request && (
+              <p className="mt-1 text-sm text-red-600">{errors.max_tokens_per_request}</p>
+            )}
+            <p className="mt-1 text-xs text-gray-500">Maximum tokens allowed per single request (prevents abuse)</p>
           </div>
 
           {/* Active Status */}

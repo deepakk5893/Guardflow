@@ -7,6 +7,7 @@ from app.core.security import verify_password, create_access_token
 from app.models.user import User
 from app.schemas.response import Token
 from app.core.config import settings
+from app.api.deps import get_current_user_from_jwt
 
 router = APIRouter()
 
@@ -18,7 +19,7 @@ async def login(
     db: Session = Depends(get_db),
     form_data: OAuth2PasswordRequestForm = Depends()
 ):
-    """Admin login endpoint"""
+    """Login endpoint for both admin and regular users"""
     # Get user by email
     user = db.query(User).filter(User.email == form_data.username).first()
     if not user:
@@ -38,12 +39,21 @@ async def login(
                 headers={"WWW-Authenticate": "Bearer"},
             )
     else:
-        # For other users, they should use API tokens, not password login
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Password login not allowed for non-admin users",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        # For regular users, verify their password from the database
+        if not user.password:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="No password set for this user",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        # For now, compare plain text passwords (should be hashed in production)
+        if form_data.password != user.password:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
     
     if not user.is_active:
         raise HTTPException(
@@ -61,4 +71,16 @@ async def login(
             "name": user.name,
             "email": user.email
         }
+    }
+
+
+@router.get("/me")
+async def get_current_user(current_user: User = Depends(get_current_user_from_jwt)):
+    """Get current user information"""
+    return {
+        "name": current_user.name,
+        "email": current_user.email,
+        "id": current_user.id,
+        "is_active": current_user.is_active,
+        "is_blocked": current_user.is_blocked
     }

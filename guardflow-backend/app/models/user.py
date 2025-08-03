@@ -14,6 +14,7 @@ class User(Base):
     # Basic info
     email = Column(String(255), unique=True, index=True, nullable=False)
     name = Column(String(255), nullable=False)
+    password = Column(String(255), nullable=True)  # For dashboard login
     token_hash = Column(String(255), unique=True, index=True, nullable=False)
     
     # Quotas and limits
@@ -44,6 +45,8 @@ class User(Base):
     logs = relationship("Log", back_populates="user")
     created_tasks = relationship("Task", back_populates="creator")
     assigned_tasks = relationship("UserTask", back_populates="assigner", foreign_keys="[UserTask.assigned_by]")
+    chats = relationship("Chat", back_populates="user")
+    alerts = relationship("Alert", foreign_keys="[Alert.user_id]", back_populates="user")
     
     def __repr__(self):
         return f"<User(id={self.id}, email='{self.email}', is_active={self.is_active})>"

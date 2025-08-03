@@ -155,16 +155,6 @@ export const Chat: React.FC = () => {
     }
   };
 
-  const handleNewChat = () => {
-    if (currentTaskId) {
-      // For one-chat-per-task, "new chat" just means go to the task's chat
-      const currentUrl = new URL(window.location.href);
-      currentUrl.searchParams.set('task', currentTaskId.toString());
-      window.location.href = currentUrl.toString();
-    } else {
-      setError('No task selected');
-    }
-  };
 
   const loadChatMessages = async (chatId: string, context?: TaskContext) => {
     setIsLoading(true);
@@ -325,14 +315,7 @@ export const Chat: React.FC = () => {
       {/* Left Sidebar */}
       <div id="chat-sidebar" className="chat-sidebar">
         <div id="chat-sidebar-header" className="sidebar-header">
-          <button 
-            id="new-chat-btn" 
-            className="new-chat-btn"
-            onClick={handleNewChat}
-          >
-            <span className="plus-icon">+</span>
-            New chat
-          </button>
+          <h2 className="text-lg font-semibold text-gray-900 px-4 py-3">Chat History</h2>
         </div>
 
         <div id="chat-search" className="search-container">
