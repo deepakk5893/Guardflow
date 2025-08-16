@@ -7,7 +7,7 @@ from app.core.security import verify_password, create_access_token
 from app.models.user import User
 from app.schemas.response import Token
 from app.core.config import settings
-from app.api.deps import get_current_user_from_jwt
+from app.api.deps import get_current_user_from_jwt, get_current_user_with_tenant
 
 router = APIRouter()
 
@@ -29,31 +29,21 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # For admin login, check against admin credentials
-    if user.email == settings.ADMIN_EMAIL:
-        # Simple password check for admin (plain text comparison for now)
-        if form_data.password != settings.ADMIN_PASSWORD:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Incorrect email or password",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-    else:
-        # For regular users, verify their password from the database
-        if not user.password:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="No password set for this user",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        
-        # For now, compare plain text passwords (should be hashed in production)
-        if form_data.password != user.password:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Incorrect email or password",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+    # Check if user has a password set
+    if not user.password:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No password set for this user",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Verify password using bcrypt
+    if not verify_password(form_data.password, user.password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     
     if not user.is_active:
         raise HTTPException(
@@ -75,12 +65,20 @@ async def login(
 
 
 @router.get("/me")
-async def get_current_user(current_user: User = Depends(get_current_user_from_jwt)):
-    """Get current user information"""
+async def get_current_user(current_user: User = Depends(get_current_user_with_tenant)):
+    """Get current user information with role data"""
     return {
         "name": current_user.name,
         "email": current_user.email,
         "id": current_user.id,
         "is_active": current_user.is_active,
-        "is_blocked": current_user.is_blocked
+        "is_blocked": current_user.is_blocked,
+        "tenant_id": current_user.tenant_id,
+        "role_id": current_user.role_id,
+        "role": {
+            "id": current_user.role.id,
+            "name": current_user.role.name,
+            "description": current_user.role.description,
+            "permissions": current_user.role.permissions
+        } if current_user.role else None
     }

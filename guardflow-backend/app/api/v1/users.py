@@ -5,7 +5,7 @@ from typing import List, Optional
 from datetime import datetime, timedelta
 
 from app.database import get_db
-from app.api.deps import get_current_user_from_api_token, get_current_user_from_jwt
+from app.api.deps import get_current_user_from_api_token, get_current_user_from_jwt, require_scope, require_scopes
 from app.models.user import User
 from app.models.log import Log
 from app.models.user_task import UserTask
@@ -21,7 +21,7 @@ router = APIRouter()
 # User Dashboard API endpoints (JWT authentication)
 @router.get("/stats")
 async def get_user_stats(
-    current_user: User = Depends(get_current_user_from_jwt),
+    current_user: User = Depends(require_scope("usage:read")),
     db: Session = Depends(get_db)
 ):
     """Get user's overview statistics for dashboard"""
@@ -42,20 +42,21 @@ async def get_user_stats(
     
     return {
         "total_tokens_used": total_tokens_used,
-        "current_deviation_score": float(current_user.deviation_score)
+        "current_deviation_score": float(current_user.deviation_score or 0.0)
     }
 
 
 @router.get("/quota-status")
 async def get_quota_status(
-    current_user: User = Depends(get_current_user_from_jwt)
+    current_user: User = Depends(require_scope("usage:read"))
 ):
     """Get current user status and warnings"""
-    high_deviation_score = float(current_user.deviation_score) >= 0.7
+    deviation_score = float(current_user.deviation_score or 0.0)
+    high_deviation_score = deviation_score >= 0.7
     blocked_status = current_user.is_blocked
     
     return {
-        "deviation_score": float(current_user.deviation_score),
+        "deviation_score": deviation_score,
         "warnings": {
             "high_deviation_score": high_deviation_score,
             "blocked_status": blocked_status
@@ -65,7 +66,7 @@ async def get_quota_status(
 
 @router.get("/profile")
 async def get_user_profile(
-    current_user: User = Depends(get_current_user_from_jwt),
+    current_user: User = Depends(require_scope("profile:read")),
     db: Session = Depends(get_db)
 ):
     """Get current user's profile information"""
@@ -92,7 +93,7 @@ async def get_user_profile(
         "created_at": current_user.created_at.isoformat(),
         "last_login": current_user.last_activity.isoformat() if current_user.last_activity else None,
         "is_blocked": current_user.is_blocked,
-        "current_deviation_score": float(current_user.deviation_score),
+        "current_deviation_score": float(current_user.deviation_score or 0.0),
         "total_requests": total_requests,
         "total_tokens_used": total_tokens_used
     }
@@ -134,7 +135,7 @@ async def update_user_profile(
         "created_at": current_user.created_at.isoformat(),
         "last_login": current_user.last_activity.isoformat() if current_user.last_activity else None,
         "is_blocked": current_user.is_blocked,
-        "current_deviation_score": float(current_user.deviation_score),
+        "current_deviation_score": float(current_user.deviation_score or 0.0),
         "total_requests": total_requests,
         "total_tokens_used": total_tokens_used
     }
@@ -250,7 +251,7 @@ async def get_user_logs(
     search: Optional[str] = None,
     limit: int = 50,
     skip: int = 0,
-    current_user: User = Depends(get_current_user_from_jwt),
+    current_user: User = Depends(require_scope("logs:read")),
     db: Session = Depends(get_db)
 ):
     """Get current user's request logs with filtering"""
@@ -426,7 +427,7 @@ async def get_api_quota_status(
 ):
     """Get current user status (API token auth)"""
     return {
-        "deviation_score": float(current_user.deviation_score),
+        "deviation_score": float(current_user.deviation_score or 0.0),
         "is_blocked": current_user.is_blocked,
         "blocked_reason": current_user.blocked_reason
     }

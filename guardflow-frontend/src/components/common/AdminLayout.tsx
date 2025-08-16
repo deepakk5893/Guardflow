@@ -41,7 +41,7 @@ export const AdminLayout: React.FC = () => {
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/logs" element={<Logs />} />
             <Route path="/analytics" element={<Analytics />} />
-            <Route path="*" element={<Navigate to="/admin" replace />} />
+            {/* Removed catch-all route to prevent redirect on refresh */}
           </Routes>
         </main>
       </div>

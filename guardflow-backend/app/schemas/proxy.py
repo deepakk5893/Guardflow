@@ -15,6 +15,7 @@ class ChatCompletionRequest(BaseModel):
     max_tokens: Optional[int] = None
     temperature: Optional[float] = 1.0
     top_p: Optional[float] = 1.0
+    format: Optional[str] = "full"  # "full" or "minimal"
 
 
 class ChatChoice(BaseModel):
@@ -41,3 +42,8 @@ class ChatCompletionResponse(BaseModel):
     intent_classification: Optional[str] = None
     confidence_score: Optional[float] = None
     deviation_score_delta: Optional[float] = None
+
+
+class MinimalResponse(BaseModel):
+    content: str
+    # usage: Usage

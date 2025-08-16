@@ -1,6 +1,7 @@
 from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
 import openai
+from openai import AsyncOpenAI
 import time
 import uuid
 from datetime import datetime
@@ -9,12 +10,11 @@ from app.core.config import settings
 from app.models.user import User
 from app.models.task import Task
 from app.models.log import Log
-from app.schemas.proxy import ChatMessage, ChatCompletionResponse, ChatChoice, Usage
+from app.schemas.proxy import ChatMessage, ChatCompletionResponse, ChatChoice, Usage, MinimalResponse
 from app.services.scoring_service import ScoringService
 
 # Configure OpenAI
-openai.api_key = settings.OPENAI_API_KEY
-
+openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 
 class ProxyService:
     def __init__(self, db: Session):
@@ -45,7 +45,7 @@ class ProxyService:
         
         try:
             # Call OpenAI API
-            response = await openai.ChatCompletion.acreate(
+            response = await openai_client.chat.completions.create(
                 model=model,
                 messages=[msg.dict() for msg in enhanced_messages],
                 temperature=0.7,
@@ -207,3 +207,104 @@ INTENT_CLASSIFICATION: coding | CONFIDENCE: 0.9
         
         # No intent classification found
         return "unknown", 0.1, clean_response
+    
+    async def process_simple_request(
+        self,
+        user: User,
+        task_id: int,
+        messages: List[ChatMessage],
+        model: str = "gpt-3.5-turbo",
+        task_type: str = "dummy"
+    ) -> ChatCompletionResponse:
+        """
+        Process a simple request for dummy tasks without intent classification
+        
+        This is a simplified version that:
+        - Forwards messages directly to OpenAI (no intent enrichment)
+        - Logs basic usage information
+        - No deviation scoring
+        """
+        
+        start_time = time.time()
+        request_id = str(uuid.uuid4())
+        
+        try:
+            # Call OpenAI API directly (no intent classification)
+            response = await openai_client.chat.completions.create(
+                model=model,
+                messages=[msg.dict() for msg in messages],
+                temperature=0.7,
+                max_tokens=1000
+            )
+            
+            # Extract response data
+            response_content = response.choices[0].message.content
+            tokens_used = response.usage.total_tokens
+            response_time_ms = int((time.time() - start_time) * 1000)
+            
+            # Create minimal log entry for dummy tasks
+            log_entry = Log(
+                user_id=user.id,
+                task_id=task_id,
+                tenant_id=user.tenant_id,
+                request_id=request_id,
+                prompt="[DUMMY_TASK_REQUEST]",  # Don't store full prompt for privacy
+                response="[DUMMY_TASK_RESPONSE]",  # Don't store full response
+                openai_tokens_used=tokens_used,
+                response_time_ms=response_time_ms,
+                status="success",
+                intent_classification="api_access",  # Special intent for dummy tasks
+                confidence_score=1.0,
+                deviation_score_delta=0.0,  # No deviation scoring for dummy tasks
+                timestamp=datetime.utcnow()
+            )
+            
+            self.db.add(log_entry)
+            self.db.commit()
+            
+            # Prepare response
+            chat_response = ChatCompletionResponse(
+                id=request_id,
+                object="chat.completion",
+                created=int(time.time()),
+                model=model,
+                choices=[
+                    ChatChoice(
+                        index=0,
+                        message=ChatMessage(role="assistant", content=response_content),
+                        finish_reason=response.choices[0].finish_reason
+                    )
+                ],
+                usage=Usage(
+                    prompt_tokens=response.usage.prompt_tokens,
+                    completion_tokens=response.usage.completion_tokens,
+                    total_tokens=response.usage.total_tokens
+                )
+            )
+            
+            return chat_response
+            
+        except Exception as e:
+            # Log error for dummy tasks
+            response_time_ms = int((time.time() - start_time) * 1000)
+            
+            error_log = Log(
+                user_id=user.id,
+                task_id=task_id,
+                tenant_id=user.tenant_id,
+                request_id=request_id,
+                prompt="[DUMMY_TASK_REQUEST]",
+                response=f"[ERROR: {str(e)}]",
+                openai_tokens_used=0,
+                response_time_ms=response_time_ms,
+                status="error",
+                intent_classification="api_access",
+                confidence_score=0.0,
+                deviation_score_delta=0.0,
+                timestamp=datetime.utcnow()
+            )
+            
+            self.db.add(error_log)
+            self.db.commit()
+            
+            raise Exception(f"OpenAI API error in dummy task: {str(e)}")

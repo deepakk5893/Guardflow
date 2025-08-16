@@ -27,8 +27,17 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRE_MINUTES: int = 1440  # 24 hours
     
-    # CORS
-    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5173"]
+    # Encryption for API keys
+    ENCRYPTION_KEY: str = secrets.token_urlsafe(32)
+    
+    # CORS - Frontend domains that can access this API
+    CORS_ORIGINS: List[str] = [
+        "http://localhost:3000",      # React dev server
+        "http://localhost:5173",      # Vite dev server
+        "https://guardflow.tech",     # Production frontend
+        "https://www.guardflow.tech", # Production frontend with www
+        "https://app.guardflow.tech"  # Optional: if you use subdomain for app
+    ]
     
     @validator("CORS_ORIGINS", pre=True)
     def assemble_cors_origins(cls, v):
@@ -38,13 +47,18 @@ class Settings(BaseSettings):
             return v
         raise ValueError(v)
     
-    # Admin
-    ADMIN_EMAIL: str
-    ADMIN_PASSWORD: str
     
     # Rate Limiting & Quotas
     DEFAULT_RATE_LIMIT: int = 100  # requests per hour
     DEFAULT_DAILY_QUOTA: int = 10000  # tokens per day
+    
+    # Email Configuration (SendGrid)
+    USE_EXTERNAL_EMAIL: bool = False  # Set to True to use SendGrid in production
+    FROM_EMAIL: str = "noreply@guardflow.tech"
+    BASE_URL: str = "https://guardflow.tech"  # Frontend URL for invitation links
+    
+    # SendGrid
+    SENDGRID_API_KEY: Optional[str] = None
     DEFAULT_MONTHLY_QUOTA: int = 300000  # tokens per month
     
     # Scoring
@@ -56,13 +70,19 @@ class Settings(BaseSettings):
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/1"
     
     # Environment
-    ENVIRONMENT: str = "development"
+    ENVIRONMENT: str = "development"  # "development", "staging", "production"
     DEBUG: bool = True
     LOG_LEVEL: str = "INFO"
     
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    # Security (Production)
+    SECURE_COOKIES: bool = False  # Set to True in production with HTTPS
+    TRUSTED_HOSTS: List[str] = ["*"]  # Restrict in production
+    
+    model_config = {
+        "env_file": ".env",
+        "case_sensitive": True,
+        "extra": "ignore"  # Ignore extra environment variables
+    }
 
 
 settings = Settings()

@@ -7,6 +7,7 @@ import { UserUsage } from '../../pages/user/Usage';
 import { UserHistory } from '../../pages/user/History';
 import { UserProfile } from '../../pages/user/Profile';
 import { UserTasks } from '../../pages/user/Tasks';
+import { ApiKeys } from '../../pages/user/ApiKeys';
 
 export const UserLayout: React.FC = () => {
   const userNavItems = [
@@ -14,6 +15,7 @@ export const UserLayout: React.FC = () => {
     { path: '/dashboard/usage', label: 'Usage', icon: '📈' },
     { path: '/dashboard/history', label: 'History', icon: '📝' },
     { path: '/dashboard/tasks', label: 'My Tasks', icon: '📋' },
+    { path: '/dashboard/api-keys', label: 'API Keys', icon: '🔑' },
     { path: '/dashboard/profile', label: 'Profile', icon: '👤' },
   ];
 
@@ -30,8 +32,9 @@ export const UserLayout: React.FC = () => {
             <Route path="/usage" element={<UserUsage />} />
             <Route path="/history" element={<UserHistory />} />
             <Route path="/tasks" element={<UserTasks />} />
+            <Route path="/api-keys" element={<ApiKeys />} />
             <Route path="/profile" element={<UserProfile />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            {/* Removed catch-all route to prevent redirect on refresh */}
           </Routes>
         </main>
       </div>

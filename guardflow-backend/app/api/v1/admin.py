@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from datetime import datetime, timezone
 
 from app.database import get_db
 from app.api.deps import get_current_admin_user
 from app.models.user import User
 from app.models.task import Task
 from app.models.log import Log
+from app.models.api_key import APIKey
 from app.schemas.user import UserCreate, UserResponse, UserUpdate
 from app.schemas.task import TaskCreate, TaskResponse, TaskUpdate
 from app.schemas.log import LogResponse
@@ -22,8 +24,12 @@ async def get_users(
     db: Session = Depends(get_db),
     current_admin: User = Depends(get_current_admin_user)
 ):
-    """Get all users (admin only)"""
-    users = db.query(User).offset(skip).limit(limit).all()
+    """Get all users in the current tenant (admin only)"""
+    # Filter by tenant_id and exclude the current admin user
+    users = db.query(User).filter(
+        User.tenant_id == current_admin.tenant_id,
+        User.id != current_admin.id  # Exclude current admin user
+    ).offset(skip).limit(limit).all()
     return users
 
 
@@ -44,12 +50,15 @@ async def get_user(
     db: Session = Depends(get_db),
     current_admin: User = Depends(get_current_admin_user)
 ):
-    """Get user by ID (admin only)"""
-    user = db.query(User).filter(User.id == user_id).first()
+    """Get user by ID within the current tenant (admin only)"""
+    user = db.query(User).filter(
+        User.id == user_id,
+        User.tenant_id == current_admin.tenant_id
+    ).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            detail="User not found in your organization"
         )
     return user
 
@@ -61,7 +70,18 @@ async def update_user(
     db: Session = Depends(get_db),
     current_admin: User = Depends(get_current_admin_user)
 ):
-    """Update user (admin only)"""
+    """Update user within the current tenant (admin only)"""
+    # First verify the user exists in the current tenant
+    user = db.query(User).filter(
+        User.id == user_id,
+        User.tenant_id == current_admin.tenant_id
+    ).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found in your organization"
+        )
+    
     admin_service = AdminService(db)
     return await admin_service.update_user(user_id, user_data)
 
@@ -73,7 +93,18 @@ async def block_user(
     db: Session = Depends(get_db),
     current_admin: User = Depends(get_current_admin_user)
 ):
-    """Block a user (admin only)"""
+    """Block a user within the current tenant (admin only)"""
+    # First verify the user exists in the current tenant
+    user = db.query(User).filter(
+        User.id == user_id,
+        User.tenant_id == current_admin.tenant_id
+    ).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found in your organization"
+        )
+    
     admin_service = AdminService(db)
     return await admin_service.block_user(user_id, reason)
 
@@ -84,7 +115,18 @@ async def unblock_user(
     db: Session = Depends(get_db),
     current_admin: User = Depends(get_current_admin_user)
 ):
-    """Unblock a user (admin only)"""
+    """Unblock a user within the current tenant (admin only)"""
+    # First verify the user exists in the current tenant
+    user = db.query(User).filter(
+        User.id == user_id,
+        User.tenant_id == current_admin.tenant_id
+    ).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found in your organization"
+        )
+    
     admin_service = AdminService(db)
     return await admin_service.unblock_user(user_id)
 
@@ -165,13 +207,117 @@ async def get_tasks(
 
 @router.post("/tasks", response_model=TaskResponse)
 async def create_task(
-    task_data: TaskCreate,
+    task_data: dict,
     db: Session = Depends(get_db),
     current_admin: User = Depends(get_current_admin_user)
 ):
-    """Create a new task (admin only)"""
+    """Create a new task or dummy API access task (admin only)"""
+    # Check if this is a dummy task creation request
+    if task_data.get("is_dummy_task"):
+        return await create_dummy_task(task_data, db, current_admin)
+    
+    # Regular task creation
     admin_service = AdminService(db)
-    return await admin_service.create_task(task_data, current_admin.id)
+    task_create = TaskCreate(**task_data)
+    return await admin_service.create_task(task_create, current_admin.id)
+
+
+async def create_dummy_task(
+    dummy_data: dict,
+    db: Session,
+    current_admin: User
+) -> dict:
+    """Create a dummy task for API access"""
+    user_id = dummy_data.get("user_id")
+    
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="user_id is required for dummy task creation"
+        )
+    
+    # Verify user exists in current tenant
+    target_user = db.query(User).filter(
+        User.id == user_id,
+        User.tenant_id == current_admin.tenant_id
+    ).first()
+    
+    if not target_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found in your organization"
+        )
+    
+    # Check if user already has a dummy task
+    from app.models.user_task import UserTask
+    
+    existing_dummy = db.query(Task).filter(
+        Task.is_dummy_task == True,
+        Task.created_by == current_admin.id
+    ).join(
+        UserTask,
+        Task.id == UserTask.task_id
+    ).filter(
+        UserTask.user_id == user_id,
+        UserTask.is_active == True
+    ).first()
+    
+    if existing_dummy:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"User {target_user.name} already has an active API access task"
+        )
+    
+    # Create dummy task using the Task model's helper method
+    dummy_task = Task.create_dummy_task(
+        user_id=user_id,
+        tenant_id=current_admin.tenant_id,
+        user_name=target_user.name
+    )
+    dummy_task.created_by = current_admin.id
+    
+    db.add(dummy_task)
+    db.flush()  # Get the task ID
+    
+    # Auto-assign the task to the user
+    from datetime import datetime
+    
+    assignment = UserTask(
+        user_id=user_id,
+        task_id=dummy_task.id,
+        assigned_by=current_admin.id,
+        assigned_at=datetime.utcnow(),
+        progress_notes="Automatic assignment for API access",
+        is_active=True
+    )
+    
+    db.add(assignment)
+    db.commit()
+    db.refresh(dummy_task)
+    
+    # Return task response
+    return {
+        "id": dummy_task.id,
+        "title": dummy_task.title,
+        "description": dummy_task.description,
+        "category": dummy_task.category,
+        "difficulty_level": dummy_task.difficulty_level,
+        "estimated_hours": dummy_task.estimated_hours,
+        "token_limit": dummy_task.token_limit,
+        "max_tokens_per_request": dummy_task.max_tokens_per_request,
+        "is_active": dummy_task.is_active,
+        "is_dummy_task": dummy_task.is_dummy_task,
+        "allowed_intents": dummy_task.allowed_intents or [],
+        "task_scope": dummy_task.task_scope,
+        "created_by": dummy_task.created_by,
+        "created_at": dummy_task.created_at.isoformat(),
+        "updated_at": dummy_task.updated_at.isoformat(),
+        "assigned_user": {
+            "id": target_user.id,
+            "name": target_user.name,
+            "email": target_user.email
+        }
+    }
 
 
 @router.get("/logs", response_model=List[LogResponse])
@@ -406,3 +552,203 @@ async def get_task_assignments_by_task(
 ):
     """Get assignments for a specific task"""
     return await get_task_assignments(task_id=task_id, db=db, current_admin=current_admin)
+
+
+# Admin-Controlled API Key Management Endpoints
+
+@router.post("/users/{user_id}/api-key")
+async def admin_create_api_key_for_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin_user)
+):
+    """Admin creates an API key for a user (MVP: one key per user)"""
+    
+    # Verify user exists and belongs to current tenant
+    target_user = db.query(User).filter(
+        User.id == user_id,
+        User.tenant_id == current_admin.tenant_id
+    ).first()
+    
+    if not target_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found in your organization"
+        )
+    
+    try:
+        # Create API key using the model's helper method
+        api_key = APIKey.create_admin_key_for_user(
+            user_id=user_id,
+            tenant_id=current_admin.tenant_id,
+            admin_user_id=current_admin.id,
+            db_session=db
+        )
+        
+        db.add(api_key)
+        db.commit()
+        db.refresh(api_key)
+        
+        return {
+            "message": f"API key created for {target_user.name}",
+            "api_key": api_key.get_raw_key(),  # Return the raw key for admin
+            "key_id": api_key.id,
+            "user_id": user_id,
+            "user_name": target_user.name,
+            "user_email": target_user.email,
+            "scopes": api_key.get_scopes(),
+            "created_at": api_key.created_at.isoformat()
+        }
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+
+@router.put("/users/{user_id}/api-key/regenerate")
+async def admin_regenerate_api_key_for_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin_user)
+):
+    """Admin regenerates an API key for a user (revokes old, creates new)"""
+    
+    # Verify user exists and belongs to current tenant
+    target_user = db.query(User).filter(
+        User.id == user_id,
+        User.tenant_id == current_admin.tenant_id
+    ).first()
+    
+    if not target_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found in your organization"
+        )
+    
+    try:
+        # Regenerate API key using the model's helper method
+        api_key = APIKey.regenerate_user_key(
+            user_id=user_id,
+            tenant_id=current_admin.tenant_id,
+            admin_user_id=current_admin.id,
+            db_session=db
+        )
+        
+        db.add(api_key)
+        db.commit()
+        db.refresh(api_key)
+        
+        return {
+            "message": f"API key regenerated for {target_user.name}",
+            "api_key": api_key.get_raw_key(),  # Return the new raw key
+            "key_id": api_key.id,
+            "user_id": user_id,
+            "user_name": target_user.name,
+            "user_email": target_user.email,
+            "scopes": api_key.get_scopes(),
+            "created_at": api_key.created_at.isoformat()
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to regenerate API key: {str(e)}"
+        )
+
+
+@router.delete("/users/{user_id}/api-key")
+async def admin_revoke_api_key_for_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin_user)
+):
+    """Admin revokes a user's API key"""
+    
+    # Verify user exists and belongs to current tenant
+    target_user = db.query(User).filter(
+        User.id == user_id,
+        User.tenant_id == current_admin.tenant_id
+    ).first()
+    
+    if not target_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found in your organization"
+        )
+    
+    # Find active API key
+    api_key = db.query(APIKey).filter(
+        APIKey.user_id == user_id,
+        APIKey.is_active == True
+    ).first()
+    
+    if not api_key:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No active API key found for this user"
+        )
+    
+    # Revoke the key
+    api_key.is_active = False
+    db.commit()
+    
+    return {
+        "message": f"API key revoked for {target_user.name}",
+        "user_id": user_id,
+        "user_name": target_user.name,
+        "revoked_at": api_key.updated_at.isoformat()
+    }
+
+
+@router.get("/users/{user_id}/api-key")
+async def admin_get_user_api_key_status(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_admin: User = Depends(get_current_admin_user)
+):
+    """Admin gets API key status for a user"""
+    
+    # Verify user exists and belongs to current tenant
+    target_user = db.query(User).filter(
+        User.id == user_id,
+        User.tenant_id == current_admin.tenant_id
+    ).first()
+    
+    if not target_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found in your organization"
+        )
+    
+    # Find API key (active or inactive)
+    api_key = db.query(APIKey).filter(
+        APIKey.user_id == user_id
+    ).order_by(APIKey.created_at.desc()).first()
+    
+    if not api_key:
+        return {
+            "user_id": user_id,
+            "user_name": target_user.name,
+            "user_email": target_user.email,
+            "has_api_key": False,
+            "api_key_status": None
+        }
+    
+    return {
+        "user_id": user_id,
+        "user_name": target_user.name,
+        "user_email": target_user.email,
+        "has_api_key": True,
+        "api_key_status": {
+            "id": api_key.id,
+            "name": api_key.name,
+            "is_active": api_key.is_active,
+            "scopes": api_key.get_scopes(),
+            "created_at": api_key.created_at.isoformat(),
+            "last_used_at": api_key.last_used_at.isoformat() if api_key.last_used_at else None,
+            "expires_at": api_key.expires_at.isoformat() if api_key.expires_at else None,
+            "is_expired": api_key.expires_at and api_key.expires_at < datetime.now(timezone.utc) if api_key.expires_at else False
+        }
+    }

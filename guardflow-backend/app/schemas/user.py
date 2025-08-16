@@ -26,17 +26,17 @@ class UserUpdate(BaseModel):
 class UserResponse(UserBase):
     id: int
     token_hash: str
-    daily_quota: int
-    monthly_quota: int
-    current_daily_usage: int
-    current_monthly_usage: int
-    requests_per_hour: int
-    deviation_score: Decimal
-    is_active: bool
-    is_blocked: bool
-    blocked_reason: Optional[str]
-    blocked_at: Optional[datetime]
-    last_activity: Optional[datetime]
+    daily_quota: Optional[int] = None
+    monthly_quota: Optional[int] = None
+    current_daily_usage: Optional[int] = 0
+    current_monthly_usage: Optional[int] = 0
+    requests_per_hour: Optional[int] = 100
+    deviation_score: Optional[Decimal] = Decimal('0.0')
+    is_active: Optional[bool] = True
+    is_blocked: Optional[bool] = False
+    blocked_reason: Optional[str] = None
+    blocked_at: Optional[datetime] = None
+    last_activity: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
 
@@ -48,14 +48,14 @@ class UserProfileResponse(BaseModel):
     id: int
     email: str
     name: str
-    daily_quota: int
-    monthly_quota: int
-    current_daily_usage: int
-    current_monthly_usage: int
-    deviation_score: Decimal
-    is_blocked: bool
-    blocked_reason: Optional[str]
-    last_activity: Optional[datetime]
+    daily_quota: Optional[int] = 10000
+    monthly_quota: Optional[int] = 300000
+    current_daily_usage: Optional[int] = 0
+    current_monthly_usage: Optional[int] = 0
+    deviation_score: Optional[Decimal] = Decimal('0.0')
+    is_blocked: Optional[bool] = False
+    blocked_reason: Optional[str] = None
+    last_activity: Optional[datetime] = None
     created_at: datetime
 
     class Config:

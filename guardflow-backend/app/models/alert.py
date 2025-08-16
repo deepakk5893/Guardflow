@@ -27,6 +27,9 @@ class Alert(Base):
     # Primary key
     id = Column(Integer, primary_key=True, index=True)
     
+    # Multi-tenant field
+    tenant_id = Column(String(36), ForeignKey("tenants.id"), nullable=True)  # Nullable for migration
+    
     # Alert details
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     task_id = Column(Integer, ForeignKey("tasks.id"), nullable=True)
@@ -49,6 +52,7 @@ class Alert(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
     # Relationships
+    tenant = relationship("Tenant", back_populates="alerts")
     user = relationship("User", foreign_keys=[user_id], back_populates="alerts")
     task = relationship("Task", back_populates="alerts")
     reviewer = relationship("User", foreign_keys=[reviewed_by])

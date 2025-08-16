@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Text, Boolean, TIMESTAMP, ForeignKey, CheckConstraint
+from sqlalchemy import Column, Integer, String, Text, Boolean, TIMESTAMP, ForeignKey, CheckConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -10,6 +10,7 @@ class Chat(Base):
     __tablename__ = "chats"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(String(36), ForeignKey("tenants.id"), nullable=True)  # Nullable for migration
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     title = Column(Text, default="New Chat")
     task_id = Column(Integer, ForeignKey("tasks.id", ondelete="SET NULL"), nullable=True)
@@ -23,6 +24,7 @@ class Chat(Base):
     )
 
     # Relationships
+    tenant = relationship("Tenant", back_populates="chats")
     user = relationship("User", back_populates="chats")
     task = relationship("Task")
     messages = relationship("Message", back_populates="chat", cascade="all, delete-orphan")

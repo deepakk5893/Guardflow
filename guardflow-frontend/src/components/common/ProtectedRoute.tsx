@@ -13,6 +13,14 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 }) => {
   const { isAuthenticated, user, isLoading } = useAuth();
   const location = useLocation();
+  
+  console.log('ProtectedRoute check:', {
+    pathname: location.pathname,
+    isAuthenticated,
+    isLoading,
+    hasUser: !!user,
+    requireAdmin
+  });
 
   if (isLoading) {
     return (
@@ -27,12 +35,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/login" replace />;
   }
 
-  // For admin routes, check if user is admin (using email for now)
+  // For admin routes, check if user has admin role
   if (requireAdmin) {
-    const isAdmin = user?.email === import.meta.env.VITE_ADMIN_EMAIL;
+    const isAdmin = user?.role?.name === 'admin' || user?.role?.name === 'super_admin';
     console.log('Admin route check:', {
       email: user?.email,
-      adminEmail: import.meta.env.VITE_ADMIN_EMAIL,
+      roleName: user?.role?.name,
       isAdmin,
       requireAdmin
     });

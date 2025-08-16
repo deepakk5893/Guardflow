@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DECIMAL, DateTime, Text
+from sqlalchemy import Column, Integer, String, Boolean, DECIMAL, DateTime, Text, ForeignKey
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
@@ -10,6 +10,10 @@ class User(Base):
     
     # Primary key
     id = Column(Integer, primary_key=True, index=True)
+    
+    # Multi-tenant fields
+    tenant_id = Column(String(36), ForeignKey("tenants.id"), nullable=True)  # Nullable for migration
+    role_id = Column(String(36), ForeignKey("roles.id"), nullable=True)      # Nullable for migration
     
     # Basic info
     email = Column(String(255), unique=True, index=True, nullable=False)
@@ -41,12 +45,15 @@ class User(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
     # Relationships
+    tenant = relationship("Tenant", back_populates="users")
+    role = relationship("Role", back_populates="users")
     user_tasks = relationship("UserTask", back_populates="user", foreign_keys="[UserTask.user_id]")
     logs = relationship("Log", back_populates="user")
     created_tasks = relationship("Task", back_populates="creator")
     assigned_tasks = relationship("UserTask", back_populates="assigner", foreign_keys="[UserTask.assigned_by]")
     chats = relationship("Chat", back_populates="user")
     alerts = relationship("Alert", foreign_keys="[Alert.user_id]", back_populates="user")
+    api_keys = relationship("APIKey", back_populates="user", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<User(id={self.id}, email='{self.email}', is_active={self.is_active})>"

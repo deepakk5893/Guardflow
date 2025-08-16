@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { User } from '../../types/auth';
+import { UserApiKeysManager } from '../admin/UserApiKeysManager';
 
 interface UsersTableProps {
   users: User[];
@@ -80,26 +81,26 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                 
                 <td id={`user-quotas-${user.id}`} className="px-6 py-4">
                   <div className="text-sm text-gray-900">
-                    <div>Daily: {user.daily_quota.toLocaleString()}</div>
-                    <div>Monthly: {user.monthly_quota.toLocaleString()}</div>
+                    <div>Daily: {(user.daily_quota || 0).toLocaleString()}</div>
+                    <div>Monthly: {(user.monthly_quota || 0).toLocaleString()}</div>
                   </div>
                 </td>
                 
                 <td id={`user-usage-${user.id}`} className="px-6 py-4">
                   <div className="text-sm text-gray-900">
-                    <div>Daily: {user.current_daily_usage.toLocaleString()}</div>
-                    <div>Monthly: {user.current_monthly_usage.toLocaleString()}</div>
+                    <div>Daily: {(user.current_daily_usage || 0).toLocaleString()}</div>
+                    <div>Monthly: {(user.current_monthly_usage || 0).toLocaleString()}</div>
                   </div>
                 </td>
                 
                 <td id={`user-status-${user.id}`} className="px-6 py-4">
                   <div className="flex flex-col space-y-1">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      user.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                      user.is_active !== false ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                     }`}>
-                      {user.is_active ? 'Active' : 'Inactive'}
+                      {user.is_active !== false ? 'Active' : 'Inactive'}
                     </span>
-                    {user.is_blocked && (
+                    {user.is_blocked === true && (
                       <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
                         Blocked
                       </span>
@@ -121,7 +122,7 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                       Edit
                     </button>
                     
-                    {user.is_blocked ? (
+                    {user.is_blocked === true ? (
                       <button
                         id={`unblock-user-${user.id}`}
                         onClick={() => onUnblockUser(user.id)}
@@ -138,6 +139,11 @@ export const UsersTable: React.FC<UsersTableProps> = ({
                         Block
                       </button>
                     )}
+                    
+                    <UserApiKeysManager 
+                      userId={user.id} 
+                      userName={user.name} 
+                    />
                   </div>
                 </td>
               </tr>

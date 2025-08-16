@@ -40,40 +40,63 @@ Guardflow/
 
 ## System Architecture Summary
 
-### Core Data Flow
+### Core Data Flow (Multi-Tenant SaaS)
 ```
-User Request → API Proxy → Validation → OpenAI + Intent → Response + Logging → Scoring → Dashboard
+User Request → Tenant Validation → JWT Auth → API Proxy → LLM Provider → Response + Logging → Scoring → Dashboard
 ```
 
 ### Key Components
-1. **JWT Authentication** - Token-based user access
-2. **Quota Management** - Daily/monthly usage limits
-3. **Intent Classification** - LLM-powered prompt categorization
-4. **Deviation Scoring** - Behavioral anomaly detection
-5. **Admin Dashboard** - User management and analytics
-6. **User Dashboard** - Self-service usage tracking
+1. **Multi-Tenant Architecture** - Complete data isolation per organization
+2. **JWT Authentication** - Token-based access with tenant context
+3. **Role-Based Access Control** - Super admin, admin, and user roles
+4. **Subscription Management** - Plan-based billing with user limits
+5. **User Invitation System** - Secure token-based team member onboarding
+6. **Quota Management** - Daily/monthly usage limits per tenant
+7. **Intent Classification** - LLM-powered prompt categorization
+8. **Deviation Scoring** - Behavioral anomaly detection
+9. **Admin Dashboard** - Multi-tenant user management and analytics
+10. **User Dashboard** - Self-service usage tracking
 
 ### Database Schema (Quick Reference)
-- **users**: Authentication, quotas, behavior scores
-- **tasks**: Project definitions and allowed intents
-- **user_tasks**: User-to-task assignments
-- **logs**: Complete request/response audit trail
+**Core Multi-Tenant Tables:**
+- **tenants**: Organizations with subscription and plan info
+- **plans**: Subscription tiers (Basic/Pro/Enterprise) with user limits
+- **roles**: Role definitions (super_admin, admin, user)
+- **user_invitations**: Secure invitation system with token-based acceptance
+
+**User & Access Management:**
+- **users**: Authentication, quotas, behavior scores (tenant-scoped)
+- **tasks**: Project definitions and allowed intents (tenant-scoped)
+- **user_tasks**: User-to-task assignments (tenant-scoped)
+- **logs**: Complete request/response audit trail (tenant-scoped)
+
+**LLM Integration:**
+- **llm_providers**: Multi-provider support per tenant (OpenAI, Anthropic, etc.)
 
 ## Development Progress Tracking
 
-### Current Status: Planning Complete ✅
-- [x] Architecture designed
-- [x] Database schema finalized
+### Current Status: Multi-Tenant SaaS Backend Complete ✅
+- [x] Architecture designed and implemented
+- [x] Multi-tenant database schema finalized and migrated
 - [x] Repository structure created
 - [x] Documentation framework established
+- [x] **FastAPI project setup** ✅
+- [x] **Multi-tenant database models and migrations** ✅
+- [x] **JWT authentication system with tenant context** ✅
+- [x] **Role-based access control (RBAC)** ✅
+- [x] **User invitation system with secure tokens** ✅
+- [x] **Subscription plan management** ✅
+- [x] **Email template system** ✅
+- [x] **Multi-LLM provider support** ✅
 
-### Next Phase: Backend Implementation
+### Current Phase: Frontend Integration & Testing
 **Priority Order:**
-1. FastAPI project setup
-2. Database models and migrations
-3. Authentication system
-4. OpenAI proxy service
-5. Scoring and monitoring
+1. Build user invitation acceptance flow (frontend)
+2. Create tenant signup and payment integration
+3. Implement admin dashboard for multi-tenant management
+4. Build user dashboard with tenant-scoped data
+5. Integrate OpenAI proxy service with tenant validation
+6. Implement scoring and monitoring with tenant isolation
 
 ### Parallel Development
 - Backend can be developed independently

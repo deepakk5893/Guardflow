@@ -59,7 +59,7 @@ const initialState: AuthState = {
   user: null,
   token: null,
   isAuthenticated: false,
-  isLoading: false,
+  isLoading: true, // Start with loading true to check for existing token
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -71,6 +71,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (token) {
       // Validate token and get user info
       validateTokenAndGetUser(token);
+    } else {
+      // No token found, stop loading
+      dispatch({ type: 'LOGIN_FAILURE' });
     }
   }, []);
 
@@ -96,8 +99,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       localStorage.setItem('auth_token', response.access_token);
       
-      // Use user data from login response
-      const user = response.user as User;
+      // Fetch full user data with role information
+      const user = await apiService.get<User>('/auth/me');
       
       dispatch({ type: 'LOGIN_SUCCESS', payload: { token: response.access_token, user } });
     } catch (error) {

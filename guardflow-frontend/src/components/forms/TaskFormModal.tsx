@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { TasksService, type Task, type CreateTaskRequest } from '../../services/tasks';
+import { UserService } from '../../services/users';
+import type { User } from '../../types/auth';
 
 interface TaskFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (task: CreateTaskRequest) => void;
+  onSubmit: (task: CreateTaskRequest | CreateDummyTaskRequest) => void;
   task?: Task | null;
   isLoading?: boolean;
+}
+
+interface CreateDummyTaskRequest {
+  user_id: number;
+  is_dummy_task: true;
 }
 
 export const TaskFormModal: React.FC<TaskFormModalProps> = ({
@@ -27,7 +34,30 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
     is_active: true
   });
 
+  const [isApiAccessTask, setIsApiAccessTask] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Load users when modal opens
+  useEffect(() => {
+    if (isOpen && !task) { // Only load users in create mode
+      loadUsers();
+    }
+  }, [isOpen, task]);
+
+  const loadUsers = async () => {
+    try {
+      setLoadingUsers(true);
+      const users = await UserService.getUsers();
+      setUsers(users || []);
+    } catch (error) {
+      console.error('Failed to load users:', error);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
 
   // Reset form when modal opens/closes or task changes
   useEffect(() => {
@@ -44,6 +74,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
           max_tokens_per_request: task.max_tokens_per_request || 1000,
           is_active: task.is_active
         });
+        setIsApiAccessTask(false); // Editing doesn't support API access mode
       } else {
         // Create mode - reset to defaults
         setFormData({
@@ -56,6 +87,8 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
           max_tokens_per_request: 1000,
           is_active: true
         });
+        setIsApiAccessTask(false);
+        setSelectedUserId(null);
       }
       setErrors({});
     }
@@ -64,37 +97,44 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.title.trim()) {
-      newErrors.title = 'Title is required';
-    } else if (formData.title.length < 3) {
-      newErrors.title = 'Title must be at least 3 characters';
-    }
+    if (isApiAccessTask) {
+      // Validate API access task (simplified validation)
+      if (!selectedUserId) {
+        newErrors.user_id = 'Please select a user for API access';
+      }
+    } else {
+      // Validate regular task (existing validation)
+      if (!formData.title.trim()) {
+        newErrors.title = 'Title is required';
+      } else if (formData.title.length < 3) {
+        newErrors.title = 'Title must be at least 3 characters';
+      }
 
-    if (!formData.description.trim()) {
-      newErrors.description = 'Description is required';
-    } else if (formData.description.length < 10) {
-      newErrors.description = 'Description must be at least 10 characters';
-    }
+      if (!formData.description.trim()) {
+        newErrors.description = 'Description is required';
+      } else if (formData.description.length < 10) {
+        newErrors.description = 'Description must be at least 10 characters';
+      }
 
-    if (formData.estimated_hours < 0.5) {
-      newErrors.estimated_hours = 'Estimated hours must be at least 0.5';
-    } else if (formData.estimated_hours > 1000) {
-      newErrors.estimated_hours = 'Estimated hours cannot exceed 1000';
-    }
+      if (formData.estimated_hours < 0.5) {
+        newErrors.estimated_hours = 'Estimated hours must be at least 0.5';
+      } else if (formData.estimated_hours > 1000) {
+        newErrors.estimated_hours = 'Estimated hours cannot exceed 1000';
+      }
 
+      if (formData.token_limit < 1000) {
+        newErrors.token_limit = 'Token limit must be at least 1,000';
+      } else if (formData.token_limit > 1000000) {
+        newErrors.token_limit = 'Token limit cannot exceed 1,000,000';
+      }
 
-    if (formData.token_limit < 1000) {
-      newErrors.token_limit = 'Token limit must be at least 1,000';
-    } else if (formData.token_limit > 1000000) {
-      newErrors.token_limit = 'Token limit cannot exceed 1,000,000';
-    }
-
-    if (formData.max_tokens_per_request && formData.max_tokens_per_request < 100) {
-      newErrors.max_tokens_per_request = 'Per-request limit must be at least 100';
-    } else if (formData.max_tokens_per_request && formData.max_tokens_per_request > formData.token_limit) {
-      newErrors.max_tokens_per_request = 'Per-request limit cannot exceed total token limit';
-    } else if (formData.max_tokens_per_request && formData.max_tokens_per_request > 10000) {
-      newErrors.max_tokens_per_request = 'Per-request limit cannot exceed 10,000';
+      if (formData.max_tokens_per_request && formData.max_tokens_per_request < 100) {
+        newErrors.max_tokens_per_request = 'Per-request limit must be at least 100';
+      } else if (formData.max_tokens_per_request && formData.max_tokens_per_request > formData.token_limit) {
+        newErrors.max_tokens_per_request = 'Per-request limit cannot exceed total token limit';
+      } else if (formData.max_tokens_per_request && formData.max_tokens_per_request > 10000) {
+        newErrors.max_tokens_per_request = 'Per-request limit cannot exceed 10,000';
+      }
     }
 
     setErrors(newErrors);
@@ -104,7 +144,16 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      onSubmit(formData);
+      if (isApiAccessTask) {
+        // Submit dummy task request
+        onSubmit({
+          user_id: selectedUserId!,
+          is_dummy_task: true
+        });
+      } else {
+        // Submit regular task request
+        onSubmit(formData);
+      }
     }
   };
 
@@ -125,10 +174,15 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
         <div id="task-form-header" className="flex justify-between items-center p-6 border-b border-gray-200">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">
-              {task ? 'Edit Task' : 'Create New Task'}
+              {task ? 'Edit Task' : isApiAccessTask ? 'Create API Access Task' : 'Create New Task'}
             </h2>
             <p className="text-sm text-gray-600">
-              {task ? 'Update task details and settings' : 'Define a new task for users to work on'}
+              {task 
+                ? 'Update task details and settings' 
+                : isApiAccessTask 
+                  ? 'Grant API access to a user without specific work restrictions'
+                  : 'Define a new task for users to work on'
+              }
             </p>
           </div>
           <button
@@ -145,7 +199,112 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Title */}
+          {/* Task Type Toggle (only show in create mode) */}
+          {!task && (
+            <div id="task-type-toggle" className="border-b border-gray-200 pb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Task Type
+              </label>
+              <div className="flex space-x-4">
+                <button
+                  type="button"
+                  onClick={() => setIsApiAccessTask(false)}
+                  className={`px-4 py-2 rounded-lg border font-medium text-sm transition-colors ${
+                    !isApiAccessTask
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  }`}
+                  disabled={isLoading}
+                >
+                  Regular Task
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsApiAccessTask(true)}
+                  className={`px-4 py-2 rounded-lg border font-medium text-sm transition-colors ${
+                    isApiAccessTask
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  }`}
+                  disabled={isLoading}
+                >
+                  API Access Task
+                </button>
+              </div>
+              <p className="mt-2 text-xs text-gray-500">
+                {isApiAccessTask 
+                  ? 'Create a dummy task for API access without specific work restrictions'
+                  : 'Create a structured task with specific requirements and monitoring'
+                }
+              </p>
+            </div>
+          )}
+
+          {/* API Access Task Form */}
+          {isApiAccessTask && (
+            <div id="api-access-form" className="space-y-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start">
+                  <svg className="w-5 h-5 text-blue-400 mr-3 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  <div>
+                    <h4 className="text-sm font-medium text-blue-800 mb-1">API Access Task</h4>
+                    <p className="text-xs text-blue-700">
+                      This creates a special task that allows the selected user to access the OpenAI API 
+                      through Guardflow without specific work restrictions. The user's quota limits will apply.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* User Selection */}
+              <div id="user-selection-field">
+                <label htmlFor="user-select" className="block text-sm font-medium text-gray-700 mb-1">
+                  Select User *
+                </label>
+                {loadingUsers ? (
+                  <div className="flex items-center space-x-2 py-2">
+                    <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                    <span className="text-sm text-gray-500">Loading users...</span>
+                  </div>
+                ) : (
+                  <select
+                    id="user-select"
+                    value={selectedUserId || ''}
+                    onChange={(e) => {
+                      setSelectedUserId(e.target.value ? parseInt(e.target.value) : null);
+                      if (errors.user_id) {
+                        setErrors(prev => ({ ...prev, user_id: '' }));
+                      }
+                    }}
+                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      errors.user_id ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    disabled={isLoading}
+                  >
+                    <option value="">Choose a user...</option>
+                    {users.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.name} ({user.email})
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {errors.user_id && (
+                  <p className="mt-1 text-sm text-red-600">{errors.user_id}</p>
+                )}
+                <p className="mt-1 text-xs text-gray-500">
+                  The selected user will be able to make API calls using their quota limits
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Regular Task Form */}
+          {!isApiAccessTask && (
+            <div className="space-y-6">
+              {/* Title */}
           <div id="task-title-field">
             <label htmlFor="task-title" className="block text-sm font-medium text-gray-700 mb-1">
               Task Title *
@@ -296,21 +455,23 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
             <p className="mt-1 text-xs text-gray-500">Maximum tokens allowed per single request (prevents abuse)</p>
           </div>
 
-          {/* Active Status */}
-          <div id="task-active-field">
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={formData.is_active}
-                onChange={(e) => handleInputChange('is_active', e.target.checked)}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                disabled={isLoading}
-              />
-              <span className="ml-2 text-sm text-gray-700">
-                Task is active and available for assignment
-              </span>
-            </label>
-          </div>
+            {/* Active Status */}
+            <div id="task-active-field">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={formData.is_active}
+                  onChange={(e) => handleInputChange('is_active', e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  disabled={isLoading}
+                />
+                <span className="ml-2 text-sm text-gray-700">
+                  Task is active and available for assignment
+                </span>
+              </label>
+            </div>
+            </div>
+          )}
 
           {/* Form Actions */}
           <div id="task-form-actions" className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
@@ -330,7 +491,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
               {isLoading && (
                 <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
               )}
-              {task ? 'Update Task' : 'Create Task'}
+              {task ? 'Update Task' : isApiAccessTask ? 'Create API Access' : 'Create Task'}
             </button>
           </div>
         </form>

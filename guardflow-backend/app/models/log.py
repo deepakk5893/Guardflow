@@ -12,6 +12,9 @@ class Log(Base):
     # Primary key
     id = Column(Integer, primary_key=True, index=True)
     
+    # Multi-tenant field
+    tenant_id = Column(String(36), ForeignKey("tenants.id"), nullable=True)  # Nullable for migration
+    
     # Request context
     user_id = Column(Integer, ForeignKey("users.id"), index=True)
     task_id = Column(Integer, ForeignKey("tasks.id"), index=True)
@@ -50,6 +53,7 @@ class Log(Base):
     timestamp = Column(DateTime(timezone=True), server_default=func.now(), index=True)
     
     # Relationships
+    tenant = relationship("Tenant", back_populates="logs")
     user = relationship("User", back_populates="logs")
     task = relationship("Task", back_populates="logs")
     

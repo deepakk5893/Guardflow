@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { UserService } from '../../services/users';
+import type { CreateUserRequest } from '../../services/users';
+import { InvitationService } from '../../services/invitations';
 import { UsersTable } from '../../components/tables/UsersTable';
 import { CreateUserModal } from '../../components/forms/CreateUserModal';
 import type { User } from '../../types/auth';
-import type { CreateUserRequest } from '../../services/users';
+import type { CreateInvitationRequest } from '../../services/invitations';
 import '../../styles/users.css';
 
+type ModalType = 'create' | 'invite' | null;
+
 export const Users: React.FC = () => {
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<ModalType>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const queryClient = useQueryClient();
 
@@ -23,7 +27,16 @@ export const Users: React.FC = () => {
     mutationFn: UserService.createUser,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      setIsCreateModalOpen(false);
+      setModalType(null);
+    },
+  });
+
+  // Create invitation mutation
+  const createInvitationMutation = useMutation({
+    mutationFn: InvitationService.createInvitation,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      setModalType(null);
     },
   });
 
@@ -52,6 +65,10 @@ export const Users: React.FC = () => {
 
   const handleCreateUser = (userData: CreateUserRequest) => {
     createUserMutation.mutate(userData);
+  };
+
+  const handleCreateInvitation = (invitationData: CreateInvitationRequest) => {
+    createInvitationMutation.mutate(invitationData);
   };
 
   const handleBlockUser = (userId: number, reason: string) => {
@@ -86,13 +103,20 @@ export const Users: React.FC = () => {
             <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
             <p className="text-gray-600">Manage users, quotas, and access permissions</p>
           </div>
-          <button
-            id="create-user-btn"
-            onClick={() => setIsCreateModalOpen(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
-          >
-            + Create User
-          </button>
+          <div className="flex gap-3">
+            <button
+              id="create-user-btn"
+              onClick={() => setModalType('create')}
+            >
+              + Create User
+            </button>
+            <button
+              id="invite-user-btn"
+              onClick={() => setModalType('invite')}
+            >
+              + Invite User
+            </button>
+          </div>
         </div>
 
         {/* Search and Filters */}
@@ -135,12 +159,14 @@ export const Users: React.FC = () => {
         )}
       </div>
 
-      {/* Create User Modal */}
+      {/* Create/Invite User Modal */}
       <CreateUserModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onSubmit={handleCreateUser}
-        isLoading={createUserMutation.isPending}
+        isOpen={modalType !== null}
+        onClose={() => setModalType(null)}
+        mode={modalType || 'invite'}
+        onSubmitUser={handleCreateUser}
+        onSubmitInvitation={handleCreateInvitation}
+        isLoading={createUserMutation.isPending || createInvitationMutation.isPending}
       />
 
       {/* Loading overlay for mutations */}

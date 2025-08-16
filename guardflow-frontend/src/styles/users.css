@@ -32,7 +32,8 @@
   font-size: 16px;
 }
 
-#create-user-btn {
+#create-user-btn,
+#invite-user-btn {
   background-color: #2563eb;
   color: white;
   padding: 12px 20px;
@@ -44,8 +45,17 @@
   font-size: 14px;
 }
 
-#create-user-btn:hover {
+#create-user-btn:hover,
+#invite-user-btn:hover {
   background-color: #1d4ed8;
+}
+
+#invite-user-btn {
+  background-color: #059669;
+}
+
+#invite-user-btn:hover {
+  background-color: #047857;
 }
 
 /* Controls section */

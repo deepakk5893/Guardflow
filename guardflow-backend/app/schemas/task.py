@@ -12,6 +12,7 @@ class TaskBase(BaseModel):
     token_limit: Optional[int] = 10000
     max_tokens_per_request: Optional[int] = 1000
     is_active: bool = True
+    llm_provider_id: Optional[str] = None  # New field for LLM provider selection
 
 
 class TaskCreate(TaskBase):
@@ -29,11 +30,13 @@ class TaskUpdate(BaseModel):
     max_tokens_per_request: Optional[int] = None
     allowed_intents: Optional[List[str]] = None
     task_scope: Optional[str] = None
+    llm_provider_id: Optional[str] = None
     is_active: Optional[bool] = None
 
 
 class TaskResponse(TaskBase):
     id: int
+    tenant_id: Optional[str] = None
     allowed_intents: List[str]
     task_scope: Optional[str] = None
     created_by: Optional[int]
@@ -42,3 +45,10 @@ class TaskResponse(TaskBase):
 
     class Config:
         from_attributes = True
+
+
+class TaskWithProvider(TaskResponse):
+    """Task response with LLM provider details"""
+    provider_name: Optional[str] = None
+    provider_instance_name: Optional[str] = None
+    available_models: List[str] = []
